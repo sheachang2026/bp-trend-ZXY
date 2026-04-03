@@ -6,8 +6,6 @@
 #        ./bp-update-github.sh 120 80 66 2026-04-02
 
 set -e
-
-TOKEN="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"
 OWNER="sheachang2026"
 REPO="bp-trend-ZXY"
 FILE_PATH="index.html"
