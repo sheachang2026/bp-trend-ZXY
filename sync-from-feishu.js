@@ -136,7 +136,7 @@ function updateHtml(records) {
     .join(',\n');
 
   // Replace RAW array
-  const rawPattern = /\/\* ── Data ─+\*\/\s*const RAW = \[[\s\S]*?\];/;
+  const rawPattern = /\/\* ── Data ─+ \*\/\s*const RAW = \[[\s\S]*?\];/;
   const newRaw = `/* ── Data ─────────────────────────────────────────────────── */\n  const RAW = [\n${rawEntries}\n  ];`;
   const newHtml = html.replace(rawPattern, newRaw);
 
