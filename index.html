@@ -318,6 +318,118 @@
     .chart-wrapper canvas {
       width: 100% !important;
       height: 100% !important;
+    }
+
+    /* ── Distribution Card ── */
+    .dist-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--sp-6) var(--sp-8);
+      box-shadow: var(--sh-card);
+      margin-block-end: var(--sp-6);
+    }
+
+    .dist-grid {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: var(--sp-8);
+      align-items: center;
+    }
+
+    @media (max-width: 580px) {
+      .dist-grid { grid-template-columns: 1fr; }
+    }
+
+    .dist-chart-wrap {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+    }
+
+    .dist-chart-wrap canvas {
+      width: 200px;
+      height: 200px;
+    }
+
+    .dist-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .dist-center__num {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .dist-center__label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-block-start: 4px;
+    }
+
+    .dist-legend {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+
+    .dist-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+    }
+
+    .dist-legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dist-legend-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-4);
+    }
+
+    .dist-legend-name {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .dist-legend-bar-wrap {
+      width: 80px;
+      height: 6px;
+      background: rgba(100,90,70,0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .dist-legend-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .dist-legend-num {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 52px;
+      text-align: right;
+    }
       display: block;
       cursor: crosshair;
     }
@@ -601,6 +713,32 @@
           <span class="tip-val" id="tip-hr">—</span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Distribution -->
+  <section class="dist-card" aria-label="血压状态分布">
+    <div class="chart-card__header">
+      <div>
+        <h2 class="chart-card__title">血压状态分布</h2>
+        <p class="chart-card__subtitle" id="dist-subtitle">各状态占比 · 全部数据</p>
+      </div>
+      <div class="period-filter" id="dist-period-filter">
+        <button class="period-btn" data-period="all">全部</button>
+        <button class="period-btn" data-period="week">周</button>
+        <button class="period-btn" data-period="month">月</button>
+        <button class="period-btn" data-period="year">年</button>
+      </div>
+    </div>
+    <div class="dist-grid">
+      <div class="dist-chart-wrap">
+        <canvas id="distChart" width="200" height="200"></canvas>
+        <div class="dist-center">
+          <span class="dist-center__num" id="dist-total">0</span>
+          <span class="dist-center__label">总记录</span>
+        </div>
+      </div>
+      <div class="dist-legend" id="dist-legend"></div>
     </div>
   </section>
 
@@ -1029,6 +1167,127 @@
   document.querySelectorAll('.period-btn').forEach(b => {
     b.addEventListener('click', () => switchPeriod(b.dataset.period));
   });
+
+  /* ═══════════════════════════════════════════
+     DISTRIBUTION CHART
+  ═══════════════════════════════════════════ */
+  const STATUS_META = [
+    { label: '理想',     color: '#30a060', bg: 'rgba(48,160,96,0.1)'  },
+    { label: '正常',     color: '#4a9edd', bg: 'rgba(74,158,221,0.1)' },
+    { label: '边缘偏高', color: '#c8880a', bg: 'rgba(200,136,10,0.1)' },
+    { label: '偏高',     color: '#d95050', bg: 'rgba(217,80,80,0.1)'  },
+  ];
+
+  const distCanvas = document.getElementById('distChart');
+  const distCtx    = distCanvas.getContext('2d');
+  const distTotal  = document.getElementById('dist-total');
+  const distLegend = document.getElementById('dist-legend');
+  const distSubtitle = document.getElementById('dist-subtitle');
+
+  function getDistData(data) {
+    const counts = [0, 0, 0, 0];
+    data.forEach(d => {
+      const cat = bp(d.sys, d.dia)[0];
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts.map((c, i) => ({ ...STATUS_META[i], count: c }));
+  }
+
+  function drawDonut(distData) {
+    const ctx = distCtx;
+    const cx  = 100, cy = 100, r = 80, ir = 52;
+    const total = distData.reduce((s, d) => s + d.count, 0);
+
+    ctx.clearRect(0, 0, 200, 200);
+    if (total === 0) {
+      /* 空状态 */
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(100,90,70,0.08)';
+      ctx.lineWidth = r - ir;
+      ctx.stroke();
+      distTotal.textContent = '0';
+      return;
+    }
+
+    let startAngle = -Math.PI / 2;
+    distData.forEach(d => {
+      if (d.count === 0) return;
+      const sweep = (d.count / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, startAngle + sweep);
+      ctx.arc(cx, cy, ir, startAngle + sweep, startAngle, true);
+      ctx.closePath();
+      ctx.fillStyle = d.color;
+      ctx.fill();
+      startAngle += sweep;
+    });
+
+    distTotal.textContent = total;
+  }
+
+  function renderDistLegend(distData) {
+    const total = distData.reduce((s, d) => s + d.count, 0);
+    distLegend.innerHTML = '';
+    distData.forEach(d => {
+      const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
+      const item = document.createElement('div');
+      item.className = 'dist-legend-item';
+      item.innerHTML = `
+        <span class="dist-legend-dot" style="background:${d.color}"></span>
+        <div class="dist-legend-info">
+          <span class="dist-legend-name">${d.label}</span>
+          <div class="dist-legend-bar-wrap">
+            <div class="dist-legend-bar" style="width:${pct}%;background:${d.color}"></div>
+          </div>
+          <span class="dist-legend-num">${d.count}次 ${pct}%</span>
+        </div>
+      `;
+      distLegend.appendChild(item);
+    });
+  }
+
+  function switchDistPeriod(period) {
+    document.querySelectorAll('#dist-period-filter .period-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.period === period)
+    );
+
+    const now = new Date();
+    let filtered = RAW;
+
+    if (period === 'week') {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 7);
+      filtered = RAW.filter(d => new Date(d.date) >= cutoff);
+      distSubtitle.textContent = '各状态占比 · 最近7天';
+    } else if (period === 'month') {
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 30);
+      filtered = RAW.filter(d => new Date(d.date) >= cutoff);
+      distSubtitle.textContent = '各状态占比 · 最近30天';
+    } else if (period === 'year') {
+      const cutoff = new Date(now); cutoff.setFullYear(cutoff.getFullYear() - 1);
+      filtered = RAW.filter(d => new Date(d.date) >= cutoff);
+      distSubtitle.textContent = '各状态占比 · 最近1年';
+    } else {
+      distSubtitle.textContent = '各状态占比 · 全部数据';
+    }
+
+    const distData = getDistData(filtered);
+    drawDonut(distData);
+    renderDistLegend(distData);
+  }
+
+  document.querySelectorAll('#dist-period-filter .period-btn').forEach(b => {
+    b.addEventListener('click', () => switchDistPeriod(b.dataset.period));
+  });
+
+  /* ── Init Distribution ── */
+  (function initDist() {
+    /* set '全部' as active by default */
+    document.querySelector('#dist-period-filter .period-btn[data-period="all"]').classList.add('active');
+    const distData = getDistData(RAW);
+    drawDonut(distData);
+    renderDistLegend(distData);
+  })();
 
   /* ── Init ── */
   (function init() {
