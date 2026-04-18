@@ -1162,7 +1162,9 @@
     updateAverages(currentData);
     renderTable(currentPage);
     renderPagination(currentPage);
-    drawChart(currentData);
+    // 日视图：图表限最近30天，表格和统计不变
+    const chartData = (period === 'day') ? currentData.slice(-30) : currentData;
+    drawChart(chartData);
   }
 
   document.querySelectorAll('.period-btn').forEach(b => {
