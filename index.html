@@ -1297,7 +1297,7 @@
     updateAverages(RAW);
     renderTable(1);
     renderPagination(1);
-    drawChart(RAW);
+    drawChart(RAW.slice(-30));
 
     /* Footer date */
     const today = new Date();
