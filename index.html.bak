@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>血压趋势 — 张星星</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Ambient Light Design Tokens ── */
+    :root {
+      /* 浅色系主色板 */
+      --bg-base:        #f8f6f2;
+      --bg-ambient:     #eeecea;
+      --bg-card:        #ffffff;
+      --bg-card-hover:  #f3f1ed;
+      --bg-glass:       rgba(255, 255, 255, 0.7);
+
+      /* 柔和边框 */
+      --border:         rgba(200, 180, 140, 0.18);
+      --border-hover:   rgba(200, 180, 140, 0.35);
+
+      /* 文字色 */
+      --text-primary:   #2c2820;
+      --text-secondary: #6b6050;
+      --text-muted:    #9e9480;
+
+      /* 血压语义色 — 柔和清晰版 */
+      --bp-high:   #d95050;
+      --bp-high-bg: rgba(217, 80, 80, 0.08);
+      --bp-warn:   #c8880a;
+      --bp-warn-bg: rgba(200, 136, 10, 0.08);
+      --bp-ok:    #30a060;
+      --bp-ok-bg:  rgba(48, 160, 96, 0.08);
+      --hr-color: #7c6fdd;
+      --hr-bg:    rgba(124, 111, 221, 0.08);
+
+      /* 间距 */
+      --sp-1:  0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem;
+      --sp-4:  1rem;    --sp-5: 1.25rem; --sp-6: 1.5rem;
+      --sp-8:  2rem;    --sp-10: 2.5rem; --sp-12: 3rem;
+
+      /* 字体 */
+      --font-sans: 'DM Sans', 'Noto Sans SC', system-ui, sans-serif;
+      --font-serif: 'Noto Serif SC', Georgia, serif;
+
+      /* 圆角 */
+      --r-sm: 8px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px;
+
+      /* 浅色阴影 */
+      --sh-card: 0 2px 12px rgba(100,90,70,0.08), 0 1px 3px rgba(100,90,70,0.05);
+      --sh-card-hover: 0 6px 24px rgba(100,90,70,0.12), 0 2px 6px rgba(100,90,70,0.07);
+
+      /* 过渡 */
+      --tr-fast: 150ms ease-out;
+      --tr-base: 250ms ease-out;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      color: var(--text-secondary);
+      min-height: 100vh;
+      /* 柔和光感渐变背景 */
+      background:
+        radial-gradient(ellipse 70% 40% at 50% -5%, rgba(255, 215, 140, 0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 90% 5%, rgba(200, 220, 255, 0.20) 0%, transparent 50%),
+        linear-gradient(160deg, #fdfcf9 0%, #f0ede6 40%, #e8e4dc 100%);
+      -webkit-font-smoothing: antialiased;
+      padding: var(--sp-8) var(--sp-6);
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      margin-block-end: var(--sp-8);
+    }
+    .page-header__eyebrow {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-block-end: var(--sp-2);
+    }
+    .page-header__row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: var(--sp-4);
+      flex-wrap: wrap;
+    }
+    .page-header__title {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .page-header__meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding-block-end: var(--sp-1);
+    }
+    .page-header__divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(200,180,140,0.3) 0%, transparent 60%);
+      margin-block-start: var(--sp-6);
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-4);
+      margin-block-end: var(--sp-6);
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: var(--sp-6);
+      box-shadow: var(--sh-card);
+      transition: background var(--tr-base), border-color var(--tr-base), box-shadow var(--tr-base);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 柔和光晕角 */
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: -20px; right: -20px;
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      filter: blur(50px);
+      opacity: 0.12;
+      pointer-events: none;
+      transition: opacity var(--tr-base);
+    }
+
+    .kpi-card--sys::before { background: var(--bp-high); }
+    .kpi-card--dia::before { background: var(--bp-warn); }
+    .kpi-card--hr::before  { background: var(--hr-color); }
+
+    .kpi-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      box-shadow: var(--sh-card-hover);
+    }
+    .kpi-card:hover::before { opacity: 0.2; }
+
+    .kpi-card__label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-block-end: var(--sp-3);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+
+    .kpi-card__dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .kpi-card--sys .kpi-card__dot { background: var(--bp-high); }
+    .kpi-card--dia .kpi-card__dot { background: var(--bp-warn); }
+    .kpi-card--hr .kpi-card__dot  { background: var(--hr-color); }
+
+    .kpi-card__value {
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-card__unit {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-inline-start: var(--sp-1);
+    }
+
+    .kpi-card__sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-block-start: var(--sp-3);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+
+    .kpi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .kpi-badge--ok   { background: var(--bp-ok-bg);  color: var(--bp-ok); }
+    .kpi-badge--warn { background: var(--bp-warn-bg); color: var(--bp-warn); }
+    .kpi-badge--high { background: var(--bp-high-bg); color: var(--bp-high); }
+    .kpi-badge--hr   { background: var(--hr-bg);      color: var(--hr-color); }
+
+    /* ── Chart Card ── */
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--sp-6) var(--sp-8);
+      box-shadow: var(--sh-card);
+      margin-block-end: var(--sp-6);
+    }
+
+    .chart-card__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--sp-4);
+      margin-block-end: var(--sp-6);
+      flex-wrap: wrap;
+    }
+
+    .chart-card__title {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .chart-card__subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-block-start: 4px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: var(--sp-5);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .legend-line {
+      width: 20px; height: 2.5px;
+      border-radius: 2px;
+    }
+    .legend-line--sys { background: var(--bp-high); }
+    .legend-line--dia { background: #60c4f0; }
+    .legend-line--hr  { background: var(--hr-color); }
+
+    /* Period Filter */
+    .period-filter {
+      display: flex;
+      gap: 2px;
+      background: rgba(100,90,70,0.06);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 3px;
+    }
+
+    .period-btn {
+      padding: var(--sp-1) var(--sp-3);
+      border: none;
+      border-radius: var(--r-sm);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background var(--tr-fast), color var(--tr-fast);
+    }
+
+    .period-btn:hover { background: rgba(100,90,70,0.08); color: var(--text-secondary); }
+
+    .period-btn.active {
+      background: #ffffff;
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(100,90,70,0.12);
+    }
+
+    /* Chart canvas wrapper */
+    .chart-wrapper {
+      position: relative;
+      aspect-ratio: 900 / 260;
+    }
+
+    .chart-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      cursor: crosshair;
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: absolute;
+      background: rgba(255, 253, 248, 0.96);
+      backdrop-filter: blur(12px);
+      color: var(--text-primary);
+      border: 1px solid rgba(200, 180, 140, 0.25);
+      border-radius: var(--r-md);
+      padding: var(--sp-3) var(--sp-4);
+      font-size: 0.78rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 120ms ease-out;
+      z-index: 100;
+      min-width: 130px;
+      line-height: 1.9;
+      box-shadow: 0 8px 32px rgba(100,90,70,0.15), 0 2px 8px rgba(100,90,70,0.08);
+    }
+
+    #tooltip.visible { opacity: 1; }
+    #tooltip .tip-date {
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      margin-block-end: var(--sp-2);
+      padding-block-end: var(--sp-2);
+      border-bottom: 1px solid rgba(200,180,140,0.2);
+    }
+
+    .tip-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-3);
+    }
+
+    .tip-label {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      color: var(--text-muted);
+    }
+
+    .tip-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .tip-val { font-weight: 600; color: var(--text-primary); }
+
+    /* ── Table Card ── */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--sp-6) var(--sp-8);
+      box-shadow: var(--sh-card);
+      overflow: hidden;
+    }
+
+    .table-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-block-end: var(--sp-5);
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+    }
+
+    .table-card__title {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .table-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 var(--sp-2) var(--sp-3);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    thead th:first-child { padding-inline-start: 0; }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(200,180,140,0.08);
+      transition: background var(--tr-fast);
+    }
+
+    tbody tr:hover { background: rgba(200,180,140,0.04); }
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody td {
+      padding: var(--sp-3) var(--sp-2);
+      vertical-align: middle;
+    }
+
+    tbody td:first-child { padding-inline-start: 0; color: var(--text-secondary); }
+    tbody td:nth-child(2),
+    tbody td:nth-child(3) { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .status-tag.ok   { background: var(--bp-ok-bg);  color: var(--bp-ok); }
+    .status-tag.warn { background: var(--bp-warn-bg); color: var(--bp-warn); }
+    .status-tag.high { background: var(--bp-high-bg); color: var(--bp-high); }
+
+    /* Pagination */
+    #pagination {
+      display: flex;
+      justify-content: center;
+      gap: var(--sp-1);
+      margin-block-start: var(--sp-5);
+      flex-wrap: wrap;
+    }
+
+    .page-btn {
+      min-width: 34px; height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: all var(--tr-fast);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .page-btn:hover:not(.disabled) {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      color: var(--text-secondary);
+    }
+
+    .page-btn.active {
+      background: #ffffff;
+      border-color: rgba(200,180,140,0.3);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(100,90,70,0.1);
+    }
+
+    .page-btn.disabled { opacity: 0.3; cursor: default; }
+    .page-ellipsis { color: var(--text-muted); padding: 0 var(--sp-1); display: flex; align-items: center; font-size: 0.75rem; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding-block-start: var(--sp-8);
+      padding-block-end: var(--sp-4);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      body { padding: var(--sp-4); }
+      .kpi-grid { grid-template-columns: 1fr; gap: var(--sp-3); }
+      .kpi-card__value { font-size: 2rem; }
+      .chart-card, .table-card { padding: var(--sp-4); }
+      .chart-card__header { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="page-header">
+    <p class="page-header__eyebrow">健康数据 · Blood Pressure</p>
+    <div class="page-header__row">
+      <h1 class="page-header__title">血压趋势</h1>
+      <p class="page-header__meta" id="page-header__meta">3月18日 — 4月15日 · 共28条记录</p>
+    </div>
+    <div class="page-header__divider"></div>
+  </header>
+
+  <!-- KPI Cards -->
+  <section class="kpi-grid" aria-label="关键指标">
+    <article class="kpi-card kpi-card--sys">
+      <p class="kpi-card__label"><span class="kpi-card__dot"></span>收缩压</p>
+      <div>
+        <span class="kpi-card__value" id="avg-sys">—</span>
+        <span class="kpi-card__unit">mmHg</span>
+      </div>
+      <div class="kpi-card__sub">
+        <span class="kpi-badge kpi-badge--ok" id="avg-sys-badge">—</span>
+      </div>
+    </article>
+
+    <article class="kpi-card kpi-card--dia">
+      <p class="kpi-card__label"><span class="kpi-card__dot"></span>舒张压</p>
+      <div>
+        <span class="kpi-card__value" id="avg-dia">—</span>
+        <span class="kpi-card__unit">mmHg</span>
+      </div>
+      <div class="kpi-card__sub">
+        <span class="kpi-badge kpi-badge--ok" id="avg-dia-badge">—</span>
+      </div>
+    </article>
+
+    <article class="kpi-card kpi-card--hr">
+      <p class="kpi-card__label"><span class="kpi-card__dot"></span>心率</p>
+      <div>
+        <span class="kpi-card__value" id="avg-hr">—</span>
+        <span class="kpi-card__unit">bpm</span>
+      </div>
+      <div class="kpi-card__sub">
+        <span class="kpi-badge kpi-badge--hr" id="avg-hr-badge">—</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- Chart -->
+  <section class="chart-card" aria-label="血压趋势图">
+    <div class="chart-card__header">
+      <div>
+        <h2 class="chart-card__title">血压 &amp; 心率趋势</h2>
+        <p class="chart-card__subtitle" id="chart-subtitle">收缩压 / 舒张压 / 心率 · 每日统计</p>
+      </div>
+      <div style="display:flex; gap:var(--sp-4); align-items:center; flex-wrap:wrap;">
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-line legend-line--sys"></span>收缩压</span>
+          <span class="legend-item"><span class="legend-line legend-line--dia"></span>舒张压</span>
+          <span class="legend-item"><span class="legend-line legend-line--hr"></span>心率</span>
+        </div>
+        <div class="period-filter" role="group" aria-label="统计周期">
+          <button class="period-btn active" data-period="day">日</button>
+          <button class="period-btn" data-period="week">周</button>
+          <button class="period-btn" data-period="month">月</button>
+          <button class="period-btn" data-period="year">年</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrapper">
+      <canvas id="bpChart" width="900" height="260" aria-label="血压趋势折线图"></canvas>
+      <div id="tooltip">
+        <div class="tip-date" id="tip-date">—</div>
+        <div class="tip-row">
+          <span class="tip-label"><span class="tip-dot" style="background:var(--bp-high)"></span>收缩压</span>
+          <span class="tip-val" id="tip-sys">—</span>
+        </div>
+        <div class="tip-row">
+          <span class="tip-label"><span class="tip-dot" style="background:#60c4f0"></span>舒张压</span>
+          <span class="tip-val" id="tip-dia">—</span>
+        </div>
+        <div class="tip-row">
+          <span class="tip-label"><span class="tip-dot" style="background:var(--hr-color)"></span>心率</span>
+          <span class="tip-val" id="tip-hr">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Table -->
+  <section class="table-card" aria-label="血压记录列表">
+    <div class="table-card__header">
+      <h2 class="table-card__title">详细记录</h2>
+      <span class="table-meta" id="table-meta">共 0 条</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>收缩压</th>
+          <th>舒张压</th>
+          <th>心率</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div id="pagination" role="navigation" aria-label="分页"></div>
+  </section>
+
+  <footer class="footer">
+    <p>最后更新：<span id="footer-date">2026年4月15日</span> · 数据仅供参考，请遵医嘱</p>
+  </footer>
+</div>
+
+<script>
+  /* ── Data ─────────────────────────────────────────────────── */
+  const RAW = [
+    { date: '2026-03-18', label: '3月18日', sys: 123, dia: 84, hr: 69 },
+    { date: '2026-03-19', label: '3月19日', sys: 128, dia: 80, hr: 69 },
+    { date: '2026-03-20', label: '3月20日', sys: 128, dia: 83, hr: 63 },
+    { date: '2026-03-21', label: '3月21日', sys: 129, dia: 75, hr: 65 },
+    { date: '2026-03-22', label: '3月22日', sys: 126, dia: 79, hr: 64 },
+    { date: '2026-03-23', label: '3月23日', sys: 122, dia: 80, hr: 69 },
+    { date: '2026-03-24', label: '3月24日', sys: 121, dia: 81, hr: 69 },
+    { date: '2026-03-25', label: '3月25日', sys: 116, dia: 79, hr: 69 },
+    { date: '2026-03-26', label: '3月26日', sys: 126, dia: 88, hr: 68 },
+    { date: '2026-03-27', label: '3月27日', sys: 117, dia: 76, hr: 74 },
+    { date: '2026-03-28', label: '3月28日', sys: 123, dia: 85, hr: 66 },
+    { date: '2026-03-29', label: '3月29日', sys: 125, dia: 81, hr: 66 },
+    { date: '2026-03-30', label: '3月30日', sys: 115, dia: 80, hr: 66 },
+    { date: '2026-03-31', label: '3月31日', sys: 120, dia: 80, hr: 78 },
+    { date: '2026-04-01', label: '4月1日', sys: 117, dia: 81, hr: 66 },
+    { date: '2026-04-02', label: '4月2日', sys: 107, dia: 73, hr: 71 },
+    { date: '2026-04-03', label: '4月3日', sys: 125, dia: 79, hr: 66 },
+    { date: '2026-04-04', label: '4月4日', sys: 124, dia: 79, hr: 65 },
+    { date: '2026-04-05', label: '4月5日', sys: 114, dia: 76, hr: 71 },
+    { date: '2026-04-06', label: '4月6日', sys: 127, dia: 82, hr: 64 },
+    { date: '2026-04-07', label: '4月7日', sys: 113, dia: 78, hr: 69 },
+    { date: '2026-04-08', label: '4月8日', sys: 119, dia: 77, hr: 70 },
+    { date: '2026-04-09', label: '4月9日', sys: 113, dia: 77, hr: 75 },
+    { date: '2026-04-10', label: '4月10日', sys: 123, dia: 80, hr: 69 },
+    { date: '2026-04-11', label: '4月11日', sys: 123, dia: 81, hr: 69 },
+    { date: '2026-04-13', label: '4月13日', sys: 123, dia: 84, hr: 75 },
+    { date: '2026-04-14', label: '4月14日', sys: 121, dia: 80, hr: 69 },
+    { date: '2026-04-15', label: '4月15日', sys: 128, dia: 85, hr: 71 },
+    { date: '2026-04-16', label: '4月16日', sys: 133, dia: 81, hr: 69 },
+    { date: '2026-04-17', label: '4月17日', sys: 112, dia: 80, hr: 69 },
+    { date: '2026-04-18', label: '4月18日', sys: 127, dia: 80, hr: 72 }
+  ];
+
+  /* ── Helpers ── */
+  const r = v => Math.round(v);
+  const bp = (sys, dia) =>
+    sys >= 140 || dia >= 90 ? [3, '偏高',    'high'] :
+    sys >= 130 || dia >= 85 ? [2, '边缘偏高', 'warn'] :
+    sys <= 120 && dia <= 80 ? [0, '理想',    'ok']  :
+                               [1, '正常',    'ok'];
+
+  /* ── Aggregation ── */
+  function agg(data) { return data.slice(); }
+
+  function aggWeek(data) {
+    const m = {};
+    data.forEach(d => {
+      const dt = new Date(d.date + 'T00:00:00');
+      const dow = (dt.getDay() + 6) % 6;
+      const mon = new Date(dt); mon.setDate(dt.getDate() - dow);
+      const key = mon.toISOString().slice(0, 10);
+      (m[key] || (m[key] = {s:[],d:[],h:[]})).s.push(d.sys);
+      m[key].d.push(d.dia);
+      if (d.hr != null) m[key].h.push(d.hr);
+    });
+    return Object.keys(m).sort().map(k => ({
+      label: new Date(k+'T00:00:00').toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})+' 周',
+      sys: r(m[k].s.reduce((a,b)=>a+b,0)/m[k].s.length),
+      dia: r(m[k].d.reduce((a,b)=>a+b,0)/m[k].d.length),
+      hr:  m[k].h.length ? r(m[k].h.reduce((a,b)=>a+b,0)/m[k].h.length) : null,
+    }));
+  }
+
+  function aggMonth(data) {
+    const m = {};
+    data.forEach(d => {
+      const key = d.date.slice(0, 7);
+      (m[key] || (m[key] = {s:[],d:[],h:[]})).s.push(d.sys);
+      m[key].d.push(d.dia);
+      if (d.hr != null) m[key].h.push(d.hr);
+    });
+    return Object.keys(m).sort().map(k => ({
+      label: k + '月',
+      sys: r(m[k].s.reduce((a,b)=>a+b,0)/m[k].s.length),
+      dia: r(m[k].d.reduce((a,b)=>a+b,0)/m[k].d.length),
+      hr:  m[k].h.length ? r(m[k].h.reduce((a,b)=>a+b,0)/m[k].h.length) : null,
+    }));
+  }
+
+  function aggYear(data) {
+    const m = {};
+    data.forEach(d => {
+      const key = d.date.slice(0,4);
+      (m[key] || (m[key] = {s:[],d:[],h:[]})).s.push(d.sys);
+      m[key].d.push(d.dia);
+      if (d.hr != null) m[key].h.push(d.hr);
+    });
+    return Object.keys(m).sort().map(k => ({
+      label: k + '年',
+      sys: r(m[k].s.reduce((a,b)=>a+b,0)/m[k].s.length),
+      dia: r(m[k].d.reduce((a,b)=>a+b,0)/m[k].d.length),
+      hr:  m[k].h.length ? r(m[k].h.reduce((a,b)=>a+b,0)/m[k].h.length) : null,
+    }));
+  }
+
+  /* ── State ── */
+  let currentData = RAW;
+  let currentPage = 1;
+  const PAGE_SIZE = 15;
+
+  /* ── Averages ── */
+  function updateAverages(data) {
+    const vs = data.map(d => d.sys);
+    const vd = data.map(d => d.dia);
+    const vh = data.filter(d => d.hr != null).map(d => d.hr);
+    const as = r(vs.reduce((a,b)=>a+b,0)/vs.length);
+    const ad = r(vd.reduce((a,b)=>a+b,0)/vd.length);
+    const ah = vh.length ? r(vh.reduce((a,b)=>a+b,0)/vh.length) : 0;
+
+    document.getElementById('avg-sys').textContent = as;
+    document.getElementById('avg-dia').textContent = ad;
+    document.getElementById('avg-hr').textContent  = ah;
+
+    const bpSys = bp(as, ad);
+    const bpDia = bp(as, ad);
+    const badgeSys = bpSys[2] === 'high' ? 'kpi-badge--high' : bpSys[2] === 'warn' ? 'kpi-badge--warn' : 'kpi-badge--ok';
+    const badgeDia = bpDia[2] === 'high' ? 'kpi-badge--high' : bpDia[2] === 'warn' ? 'kpi-badge--warn' : 'kpi-badge--ok';
+
+    document.getElementById('avg-sys-badge').className = 'kpi-badge ' + badgeSys;
+    document.getElementById('avg-sys-badge').textContent = '平均 ' + as + ' mmHg · ' + bpSys[1];
+    document.getElementById('avg-dia-badge').className = 'kpi-badge ' + badgeDia;
+    document.getElementById('avg-dia-badge').textContent = '平均 ' + ad + ' mmHg · ' + bpDia[1];
+    document.getElementById('avg-hr-badge').textContent  = '平均 ' + ah + ' bpm · ' + (ah < 60 ? '偏低' : ah > 100 ? '偏快' : '正常');
+  }
+
+  /* ── Table ── */
+  function renderTable(page) {
+    const start = (page - 1) * PAGE_SIZE;
+    const pageData = currentData.slice().reverse().slice(start, start + PAGE_SIZE);
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    pageData.forEach(d => {
+      const [,,cls] = bp(d.sys, d.dia);
+      const label = bp(d.sys, d.dia)[1];
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + d.label + '</td>' +
+        '<td style="color:var(--bp-high)">' + d.sys + '</td>' +
+        '<td style="color:#60c4f0">' + d.dia + '</td>' +
+        '<td style="color:var(--hr-color)">' + (d.hr != null ? d.hr + ' bpm' : '—') + '</td>' +
+        '<td><span class="status-tag ' + cls + '">' + label + '</span></td>';
+      tbody.appendChild(tr);
+    });
+    const total = currentData.length;
+    document.getElementById('table-meta').textContent = '第 ' + (start+1) + '–' + Math.min(start+PAGE_SIZE, total) + ' 条，共 ' + total + ' 条';
+  }
+
+  function renderPagination(page) {
+    const el = document.getElementById('pagination');
+    el.innerHTML = '';
+    const total = Math.ceil(currentData.length / PAGE_SIZE) || 1;
+
+    function btn(text, target, active, disabled) {
+      const b = document.createElement('button');
+      b.className = 'page-btn' + (active ? ' active' : '') + (disabled ? ' disabled' : '');
+      b.textContent = text;
+      if (!disabled) b.onclick = () => { currentPage = target; renderTable(currentPage); renderPagination(currentPage); };
+      el.appendChild(b);
+    }
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) btn(i, i, i === page, false);
+    } else {
+      btn(1, 1, page === 1, false);
+      if (page > 3) { const e = document.createElement('span'); e.className = 'page-ellipsis'; e.textContent = '…'; el.appendChild(e); }
+      for (let i = Math.max(2, page - 1); i <= Math.min(total - 1, page + 1); i++) btn(i, i, i === page, false);
+      if (page < total - 2) { const e = document.createElement('span'); e.className = 'page-ellipsis'; e.textContent = '…'; el.appendChild(e); }
+      btn(total, total, page === total, false);
+    }
+    btn('‹', page - 1, false, page === 1);
+    btn('›', page + 1, false, page === total);
+  }
+
+  /* ── Chart ── */
+  const canvas = document.getElementById('bpChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const padL = 52, padR = 20, padT = 16, padB = 36;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  function drawChart(data) {
+    ctx.clearRect(0, 0, W, H);
+
+    /* Background subtle gradient */
+    const bg = ctx.createLinearGradient(0, padT, 0, H - padB);
+    bg.addColorStop(0, 'rgba(48,160,96,0.02)');
+    bg.addColorStop(1, 'rgba(217,80,80,0.02)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(padL, padT, plotW, plotH);
+
+    /* Grid lines — expanded to 70-140 to fit both SYS and DIA */
+    ctx.strokeStyle = 'rgba(200,180,140,0.12)';
+    ctx.lineWidth = 1;
+    for (let v = 70; v <= 140; v += 10) {
+      const y = padT + plotH - (v - 70) / 70 * plotH;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+    }
+
+    /* Y axis labels (left: SYS/DIA) — 70 to 140 */
+    ctx.fillStyle = 'rgba(107,96,80,0.5)';
+    ctx.font = '10px DM Sans';
+    ctx.textAlign = 'right';
+    for (let v = 70; v <= 140; v += 10) {
+      ctx.fillText(v, padL - 6, padT + plotH - (v - 70) / 70 * plotH + 4);
+    }
+
+    /* Left axis: 收缩压/舒张压 (70-140) */
+    function sy(v) { return padT + plotH - (v - 70) / 70 * plotH; }
+    /* Right axis: 心率 (40-100) */
+    function hy(v) { return padT + plotH - (v - 40) / 60 * plotH; }
+    /* X */
+    function sx(i) { return padL + (i + 0.5) / data.length * plotW; }
+
+    /* Draw smooth lines */
+    function drawLine(yVals, color, lw, dash) {
+      if (yVals.every(v => v == null)) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw;
+      if (dash) ctx.setLineDash(dash);
+      let started = false;
+      yVals.forEach((v, i) => {
+        if (v == null) { started = false; return; }
+        const x = sx(i), y = sy(v);
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else {
+          const prev = yVals.slice(0, i).reverse().find(w => w != null);
+          const ox = sx(prev !== undefined ? i - 1 - yVals.slice(0, i).reverse().indexOf(prev) : i);
+          const oy = sy(prev);
+          const cpx = (ox + x) / 2;
+          ctx.bezierCurveTo(cpx, oy, cpx, y, x, y);
+        }
+      });
+      ctx.stroke(); ctx.restore();
+    }
+
+    function drawPoints(yVals, color) {
+      yVals.forEach((v, i) => {
+        if (v == null) return;
+        const x = sx(i), y = sy(v);
+        /* Glow */
+        ctx.save();
+        ctx.shadowColor = color; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.restore();
+        /* White ring */
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,253,248,0.9)'; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+      });
+    }
+
+    /* HR on right axis */
+    function drawHRLine(yVals, color, lw, dash) {
+      if (yVals.every(v => v == null)) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw;
+      if (dash) ctx.setLineDash(dash);
+      let started = false;
+      yVals.forEach((v, i) => {
+        if (v == null) { started = false; return; }
+        const x = sx(i), y = hy(v);
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else {
+          const prev = yVals.slice(0, i).reverse().find(w => w != null);
+          const ox = sx(prev !== undefined ? i - 1 - yVals.slice(0, i).reverse().indexOf(prev) : i);
+          const oy = hy(prev);
+          const cpx = (ox + x) / 2;
+          ctx.bezierCurveTo(cpx, oy, cpx, y, x, y);
+        }
+      });
+      ctx.stroke(); ctx.restore();
+    }
+
+    function drawHRPoints(yVals, color) {
+      yVals.forEach((v, i) => {
+        if (v == null) return;
+        const x = sx(i), y = hy(v);
+        ctx.save();
+        ctx.shadowColor = color; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(x, y, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(x, y, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,253,248,0.9)'; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, 1.1, 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+      });
+    }
+
+    /* HR right axis labels — adjust range to 40-100 */
+    ctx.fillStyle = 'rgba(124,111,221,0.5)';
+    ctx.font = '10px DM Sans';
+    ctx.textAlign = 'right';
+    for (let v = 40; v <= 100; v += 10) {
+      ctx.fillText(v, W - 4, hy(v) + 4);
+    }
+
+    /* Bottom X labels */
+    ctx.fillStyle = 'rgba(107,96,80,0.45)';
+    ctx.font = '10px DM Sans';
+    ctx.textAlign = 'center';
+    const step = Math.max(1, Math.ceil(data.length / 12));
+    data.forEach((d, i) => {
+      if (i % step === 0 || i === data.length - 1) {
+        ctx.fillText(d.label, sx(i), H - 8);
+      }
+    });
+
+    drawLine(data.map(d => d.sys), '#ff7b7b', 2.2, []);
+    drawLine(data.map(d => d.dia), '#60c4f0', 2.2, []);
+    drawHRLine(data.map(d => d.hr), '#b4a0ff', 1.8, [5, 4]);
+    drawPoints(data.map(d => d.sys), '#ff7b7b');
+    drawPoints(data.map(d => d.dia), '#60c4f0');
+    drawHRPoints(data.map(d => d.hr), '#b4a0ff');
+
+    canvas._chartData = data;
+    canvas._sxFn = sx;
+    canvas._syFn = sy;
+    canvas._hyFn = hy;
+  }
+
+  /* ── Tooltip ── */
+  const tooltip = document.getElementById('tooltip');
+  const tipDate = document.getElementById('tip-date');
+  const tipSys  = document.getElementById('tip-sys');
+  const tipDia  = document.getElementById('tip-dia');
+  const tipHr   = document.getElementById('tip-hr');
+
+  canvas.addEventListener('mousemove', function(e) {
+    const data = canvas._chartData;
+    if (!data || !canvas._sxFn) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const sxFn = canvas._sxFn;
+
+    let nearest = 0, minDist = Infinity;
+    data.forEach((_, i) => {
+      const dist = Math.abs(sxFn(i) - mx);
+      if (dist < minDist) { minDist = dist; nearest = i; }
+    });
+
+    if (minDist < 60) {
+      const d = data[nearest];
+      tipDate.textContent = d.label;
+      tipSys.textContent = d.sys + ' mmHg';
+      tipDia.textContent = d.dia + ' mmHg';
+      tipHr.textContent  = d.hr != null ? d.hr + ' bpm' : '—';
+
+      const wrapRect = canvas.parentElement.getBoundingClientRect();
+      const tipW = 136, tipH = 88;
+      let left = (e.clientX - wrapRect.left) + 14;
+      let top  = (e.clientY - wrapRect.top)  - tipH / 2;
+      if (left + tipW > wrapRect.width) left = left - tipW - 20;
+      if (top < 4) top = 4;
+      if (top + tipH > wrapRect.height) top = wrapRect.height - tipH - 4;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top  = top  + 'px';
+      tooltip.classList.add('visible');
+    } else {
+      tooltip.classList.remove('visible');
+    }
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    tooltip.classList.remove('visible');
+  });
+
+  /* ── Period Filter ── */
+  function switchPeriod(period) {
+    document.querySelectorAll('.period-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.period === period)
+    );
+    const subMap = { day: '每日', week: '每周', month: '每月', year: '每年' };
+    document.getElementById('chart-subtitle').textContent = '收缩压 / 舒张压 / 心率 · ' + subMap[period] + '统计';
+    const aggMap = { day: agg, week: aggWeek, month: aggMonth, year: aggYear };
+    currentData = aggMap[period](RAW);
+    currentPage = 1;
+    updateAverages(currentData);
+    renderTable(currentPage);
+    renderPagination(currentPage);
+    drawChart(currentData);
+  }
+
+  document.querySelectorAll('.period-btn').forEach(b => {
+    b.addEventListener('click', () => switchPeriod(b.dataset.period));
+  });
+
+  /* ── Init ── */
+  (function init() {
+    updateAverages(RAW);
+    renderTable(1);
+    renderPagination(1);
+    drawChart(RAW);
+
+    /* Footer date */
+    const today = new Date();
+    document.getElementById('footer-date').textContent =
+      today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
+
+    /* Header meta */
+    if (RAW.length) {
+      document.getElementById('page-header__meta').textContent =
+        RAW[0].label + ' — ' + RAW[RAW.length-1].label + ' · 共' + RAW.length + '条记录';
+    }
+  })();
+</script>
+</body>
+</html>
