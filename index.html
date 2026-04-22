@@ -692,6 +692,14 @@
           <button class="period-btn" data-period="week">周</button>
           <button class="period-btn" data-period="month">月</button>
           <button class="period-btn" data-period="year">年</button>
+          <button class="period-btn" data-period="custom">自定义</button>
+        </div>
+        <div id="custom-range" style="display:none; align-items:center; gap:var(--sp-2); flex-wrap:wrap;">
+          <label style="font-size:0.75rem; color:var(--text-muted);">从</label>
+          <input type="date" id="range-start" style="border:1px solid var(--border); border-radius:var(--r-sm); padding:3px 6px; font-size:0.8rem;" />
+          <label style="font-size:0.75rem; color:var(--text-muted);">至</label>
+          <input type="date" id="range-end" style="border:1px solid var(--border); border-radius:var(--r-sm); padding:3px 6px; font-size:0.8rem;" />
+          <button id="apply-range" style="padding:3px 10px; border:none; border-radius:var(--r-sm); background:var(--bp-high); color:#fff; font-size:0.75rem; cursor:pointer;">应用</button>
         </div>
       </div>
     </div>
@@ -1157,8 +1165,24 @@
     document.querySelectorAll('.period-btn').forEach(b =>
       b.classList.toggle('active', b.dataset.period === period)
     );
-    const subMap = { day: '每日', week: '每周', month: '每月', year: '每年' };
-    document.getElementById('chart-subtitle').textContent = '收缩压 / 舒张压 / 心率 · ' + subMap[period] + '统计';
+
+    // 显示/隐藏自定义日期选择器
+    const customRange = document.getElementById('custom-range');
+    if (period === 'custom') {
+      customRange.style.display = 'flex';
+      // 默认选中今天所在的月
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      document.getElementById('range-start').value = fmtDate(firstDay);
+      document.getElementById('range-end').value = fmtDate(today);
+      document.getElementById('chart-subtitle').textContent = '收缩压 / 舒张压 / 心率 · 自定义范围';
+      return;
+    } else {
+      customRange.style.display = 'none';
+      const subMap = { day: '每日', week: '每周', month: '每月', year: '每年' };
+      document.getElementById('chart-subtitle').textContent = '收缩压 / 舒张压 / 心率 · ' + subMap[period] + '统计';
+    }
+
     const aggMap = { day: agg, week: aggWeek, month: aggMonth, year: aggYear };
     currentData = aggMap[period](RAW);
     currentPage = 1;
@@ -1169,6 +1193,35 @@
     const chartData = (period === 'day') ? currentData.slice(-30) : currentData;
     drawChart(chartData);
   }
+
+  // ── 自定义日期范围 ──
+  function fmtDate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  document.getElementById('apply-range').addEventListener('click', function() {
+    const startVal = document.getElementById('range-start').value;
+    const endVal   = document.getElementById('range-end').value;
+    if (!startVal || !endVal || startVal > endVal) {
+      alert('请选择正确的日期范围（开始日期不能晚于结束日期）');
+      return;
+    }
+    const start = new Date(startVal + 'T00:00:00');
+    const end   = new Date(endVal   + 'T23:59:59');
+    const filtered = RAW.filter(d => {
+      const dt = new Date(d.date + 'T00:00:00');
+      return dt >= start && dt <= end;
+    });
+    const sorted = filtered.slice().sort((a, b) => a.date < b.date ? -1 : 1);
+    currentData = sorted;
+    document.getElementById('chart-subtitle').textContent =
+      '收缩压 / 舒张压 / 心率 · ' + startVal + ' 至 ' + endVal;
+    currentPage = 1;
+    updateAverages(sorted);
+    renderTable(1);
+    renderPagination(1);
+    drawChart(sorted);
+  });
 
   document.querySelectorAll('.period-btn').forEach(b => {
     b.addEventListener('click', () => switchPeriod(b.dataset.period));
