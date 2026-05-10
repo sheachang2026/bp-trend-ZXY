@@ -320,6 +320,55 @@
       height: 100% !important;
     }
 
+    /* ── Menstrual Cycle Card ── */
+    .menstrual-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--sp-6) var(--sp-8);
+      box-shadow: var(--sh-card);
+      margin-block-end: var(--sp-6);
+    }
+
+    .menstrual-card__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--sp-4);
+      margin-block-end: var(--sp-5);
+      flex-wrap: wrap;
+    }
+
+    .menstrual-chart-wrap {
+      position: relative;
+      height: 200px;
+    }
+
+    .menstrual-chart-wrap canvas {
+      width: 100% !important;
+      height: 200px !important;
+    }
+
+    .period-legend {
+      display: flex;
+      gap: var(--sp-5);
+      align-items: center;
+      flex-wrap: wrap;
+      margin-block-start: var(--sp-4);
+    }
+
+    .period-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .period-swatch { width: 14px; height: 10px; border-radius: 2px; }
+    .period-swatch--period { background: rgba(230,80,110,0.12); border: 1px solid rgba(230,80,110,0.35); }
+    .period-swatch--start   { background: rgba(230,80,110,0.65); }
+
     /* ── Distribution Card ── */
     .dist-card {
       background: var(--bg-card);
@@ -747,6 +796,27 @@
         </div>
       </div>
       <div class="dist-legend" id="dist-legend"></div>
+    </div>
+  </section>
+
+  <!-- Menstrual Cycle Analysis -->
+  <section class="menstrual-card" aria-label="血压与月经周期分析">
+    <div class="menstrual-card__header">
+      <div>
+        <h2 class="chart-card__title">血压 &amp; 月经周期趋势</h2>
+        <p class="chart-card__subtitle">4月 &amp; 5月 · 收缩压 &amp; 舒张压随月经周期变化</p>
+      </div>
+      <div class="period-legend">
+        <span class="period-legend-item">
+          <span class="period-swatch period-swatch--period"></span>月经期
+        </span>
+        <span class="period-legend-item">
+          <span class="period-swatch period-swatch--start"></span>月经开始日
+        </span>
+      </div>
+    </div>
+    <div class="menstrual-chart-wrap">
+      <canvas id="menstrualChart" width="900" height="200"></canvas>
     </div>
   </section>
 
@@ -1364,12 +1434,168 @@
     renderDistLegend(distData);
   })();
 
+  /* ═══════════════════════════════════════════
+     MENSTRUAL CYCLE CHART
+  ═══════════════════════════════════════════ */
+  const MENSTRUAL_PERIODS = [
+    { start: '2026-04-12', end: '2026-04-16', label: '4月' },
+    { start: '2026-05-07', end: '2026-05-11', label: '5月' },
+  ];
+
+  const menstCanvas  = document.getElementById('menstrualChart');
+  const menstCtx     = menstCanvas.getContext('2d');
+  const MW = menstCanvas.width, MH = menstCanvas.height;
+  const mPadL = 52, mPadR = 20, mPadT = 16, mPadB = 36;
+  const mPlotW = MW - mPadL - mPadR;
+  const mPlotH = MH - mPadT - mPadB;
+
+  function drawMenstrualChart() {
+    menstCtx.clearRect(0, 0, MW, MH);
+
+    /* Filter to 4月+5月 data */
+    const filtered = RAW.filter(d => d.date >= '2026-04-01');
+    if (!filtered.length) return;
+
+    /* Background subtle gradient */
+    const bg = menstCtx.createLinearGradient(0, mPadT, 0, MH - mPadB);
+    bg.addColorStop(0, 'rgba(230,80,110,0.03)');
+    bg.addColorStop(1, 'rgba(80,160,130,0.03)');
+    menstCtx.fillStyle = bg;
+    menstCtx.fillRect(mPadL, mPadT, mPlotW, mPlotH);
+
+    /* Grid */
+    menstCtx.strokeStyle = 'rgba(200,180,140,0.12)';
+    menstCtx.lineWidth = 1;
+    for (let v = 70; v <= 140; v += 10) {
+      const y = mPadT + mPlotH - (v - 70) / 70 * mPlotH;
+      menstCtx.beginPath();
+      menstCtx.moveTo(mPadL, y);
+      menstCtx.lineTo(mPadL + mPlotW, y);
+      menstCtx.stroke();
+    }
+
+    /* Period shading */
+    const allDates = filtered.map(d => d.date);
+    const firstDate = new Date(allDates[0] + 'T00:00:00');
+    const lastDate  = new Date(allDates[allDates.length - 1] + 'T00:00:00');
+    const totalMs   = lastDate - firstDate;
+
+    MENSTRUAL_PERIODS.forEach(p => {
+      const pStart = new Date(p.start + 'T00:00:00');
+      const pEnd   = new Date(p.end   + 'T23:59:59');
+      if (pEnd < firstDate || pStart > lastDate) return;
+
+      const x1 = mPadL + Math.max(0, (pStart - firstDate) / totalMs) * mPlotW;
+      const x2 = mPadL + Math.min(1, (pEnd   - firstDate) / totalMs) * mPlotW;
+
+      /* Shaded region */
+      menstCtx.fillStyle = 'rgba(230, 80, 110, 0.10)';
+      menstCtx.fillRect(x1, mPadT, x2 - x1, mPlotH);
+
+      /* Left edge line */
+      menstCtx.strokeStyle = 'rgba(230, 80, 110, 0.35)';
+      menstCtx.lineWidth = 1;
+      menstCtx.setLineDash([3, 3]);
+      menstCtx.beginPath();
+      menstCtx.moveTo(x1, mPadT);
+      menstCtx.lineTo(x1, mPadT + mPlotH);
+      menstCtx.stroke();
+      menstCtx.setLineDash([]);
+
+      /* Start marker */
+      const markerX = x1;
+      const markerY = mPadT + mPlotH + 10;
+      menstCtx.fillStyle = 'rgba(230, 80, 110, 0.75)';
+      menstCtx.font = 'bold 10px DM Sans';
+      menstCtx.textAlign = 'center';
+      menstCtx.fillText(p.label + '经', markerX, markerY);
+    });
+
+    /* Y axis labels */
+    menstCtx.fillStyle = 'rgba(107,96,80,0.45)';
+    menstCtx.font = '10px DM Sans';
+    menstCtx.textAlign = 'right';
+    for (let v = 70; v <= 140; v += 10) {
+      const y = mPadT + mPlotH - (v - 70) / 70 * mPlotH;
+      menstCtx.fillText(v, mPadL - 6, y + 4);
+    }
+
+    /* X labels */
+    menstCtx.fillStyle = 'rgba(107,96,80,0.45)';
+    menstCtx.font = '10px DM Sans';
+    menstCtx.textAlign = 'center';
+    const step = Math.max(1, Math.ceil(filtered.length / 14));
+    filtered.forEach((d, i) => {
+      if (i % step === 0 || i === filtered.length - 1) {
+        const x = mPadL + (i + 0.5) / filtered.length * mPlotW;
+        menstCtx.fillText(d.label, x, MH - 8);
+      }
+    });
+
+    /* Scale functions */
+    function msy(v)  { return mPadT + mPlotH - (v - 70) / 70 * mPlotH; }
+    function msx(i)  { return mPadL + (i + 0.5) / filtered.length * mPlotW; }
+
+    /* Draw smooth SYS line */
+    function drawMLine(vals, color, lw) {
+      menstCtx.beginPath();
+      menstCtx.strokeStyle = color;
+      menstCtx.lineWidth = lw;
+      let started = false;
+      vals.forEach((v, i) => {
+        if (v == null) { started = false; return; }
+        const x = msx(i), y = msy(v);
+        if (!started) { menstCtx.moveTo(x, y); started = true; }
+        else {
+          const prev = vals.slice(0, i).reverse().find(w => w != null);
+          const pi = prev !== undefined ? i - 1 - vals.slice(0, i).reverse().indexOf(prev) : i;
+          const ox = msx(pi), oy = msy(prev);
+          const cpx = (ox + x) / 2;
+          menstCtx.bezierCurveTo(cpx, oy, cpx, y, x, y);
+        }
+      });
+      menstCtx.stroke();
+    }
+
+    function drawMPoints(vals, color) {
+      vals.forEach((v, i) => {
+        if (v == null) return;
+        const x = msx(i), y = msy(v);
+        menstCtx.save();
+        menstCtx.shadowColor = color;
+        menstCtx.shadowBlur = 8;
+        menstCtx.beginPath();
+        menstCtx.arc(x, y, 3, 0, Math.PI * 2);
+        menstCtx.fillStyle = color;
+        menstCtx.fill();
+        menstCtx.restore();
+        menstCtx.beginPath();
+        menstCtx.arc(x, y, 3, 0, Math.PI * 2);
+        menstCtx.fillStyle = 'rgba(255,253,248,0.9)';
+        menstCtx.fill();
+        menstCtx.strokeStyle = color;
+        menstCtx.lineWidth = 1.8;
+        menstCtx.stroke();
+        menstCtx.beginPath();
+        menstCtx.arc(x, y, 1.2, 0, Math.PI * 2);
+        menstCtx.fillStyle = color;
+        menstCtx.fill();
+      });
+    }
+
+    drawMLine(filtered.map(d => d.sys), '#ff7b7b', 2.2);
+    drawMLine(filtered.map(d => d.dia), '#60c4f0', 2.0);
+    drawMPoints(filtered.map(d => d.sys), '#ff7b7b');
+    drawMPoints(filtered.map(d => d.dia), '#60c4f0');
+  }
+
   /* ── Init ── */
   (function init() {
     updateAverages(RAW);
     renderTable(1);
     renderPagination(1);
     drawChart(RAW.slice(-30));
+    drawMenstrualChart();
 
     /* Footer date */
     const today = new Date();
