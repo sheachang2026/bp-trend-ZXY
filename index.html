@@ -229,6 +229,7 @@
       padding: var(--sp-6) var(--sp-8);
       box-shadow: var(--sh-card);
       margin-block-end: var(--sp-6);
+      overflow: hidden;
     }
 
     .chart-card__header {
@@ -310,14 +311,86 @@
     }
 
     /* Chart canvas wrapper */
+    .bp-chart-body {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .y-col {
+      position: relative;
+      flex-shrink: 0;
+      pointer-events: none;
+      height: 260px;
+    }
+
+    .y-col span {
+      position: absolute;
+      right: 4px;
+      transform: translateY(-50%);
+      line-height: 1;
+      font-size: 10px;
+      color: rgba(107,96,80,0.5);
+      font-family: 'DM Sans', sans-serif;
+      white-space: nowrap;
+    }
+
+    .y-col-left { width: 52px; }
+    .y-col-right { width: 40px; }
+
+    .y-col span {
+      font-size: 10px;
+      color: rgba(107,96,80,0.5);
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .y-col-right span {
+      left: 4px;
+      right: auto;
+      transform: translateY(-50%);
+      color: rgba(124,111,221,0.5);
+    }
+
     .chart-wrapper {
       position: relative;
-      aspect-ratio: 900 / 260;
+      overflow-x: auto;
+      overflow-y: hidden;
+      cursor: grab;
+      height: 260px;
+      flex: 1;
+      min-width: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(200,180,140,0.3) transparent;
+    }
+
+    .chart-wrapper::-webkit-scrollbar { height: 4px; }
+    .chart-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .chart-wrapper::-webkit-scrollbar-thumb {
+      background: rgba(200,180,140,0.35);
+      border-radius: 2px;
     }
 
     .chart-wrapper canvas {
-      width: 100% !important;
-      height: 100% !important;
+      flex-shrink: 0;
+      width: auto !important;
+      height: 260px !important;
+      display: block;
+    }
+
+    /* y-col now handles y-axis labels */
+
+    .chart-drag-hint {
+      position: absolute;
+      right: 24px; bottom: 24px;
+      z-index: 20;
+      font-size: 0.68rem;
+      color: rgba(107,96,80,0.35);
+      pointer-events: none;
+      user-select: none;
+      z-index: 10;
     }
 
     /* ── Menstrual Cycle Card ── */
@@ -521,16 +594,19 @@
       margin-block-start: 4px;
     }
 
+
     .dist-legend {
       display: flex;
       flex-direction: column;
       gap: var(--sp-4);
+      width: 260px;
+      flex-shrink: 0;
     }
 
     .dist-legend-item {
       display: flex;
       align-items: center;
-      gap: var(--sp-3);
+      gap: 0;
     }
 
     .dist-legend-dot {
@@ -538,24 +614,29 @@
       height: 12px;
       border-radius: 50%;
       flex-shrink: 0;
+      align-self: center;
     }
 
-    .dist-legend-info {
-      flex: 1;
+    /* dist-legend-info removed */
+
+    .dist-legend-label-wrap {
+      width: 64px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: var(--sp-4);
     }
 
     .dist-legend-name {
       font-size: 0.85rem;
       color: var(--text-secondary);
+      white-space: nowrap;
+      display: inline-block;
     }
 
     .dist-legend-bar-wrap {
-      width: 80px;
       height: 6px;
+      width: 80px;
+      flex-shrink: 0;
       background: rgba(100,90,70,0.08);
       border-radius: 3px;
       overflow: hidden;
@@ -565,69 +646,48 @@
       height: 100%;
       border-radius: 3px;
       transition: width 0.6s ease;
+      display: block;
     }
 
     .dist-legend-num {
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-primary);
-      min-width: 52px;
-      text-align: right;
+      white-space: nowrap;
+      padding-left: var(--sp-3);
+      flex-shrink: 0;
     }
       display: block;
       cursor: crosshair;
     }
 
     /* Tooltip */
+    /* Tooltip - bottom info bar within chart-card */
     #tooltip {
-      position: absolute;
-      background: rgba(255, 253, 248, 0.96);
+      visibility: hidden;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-8);
+      background: rgba(255, 253, 248, 0.95);
       backdrop-filter: blur(12px);
       color: var(--text-primary);
-      border: 1px solid rgba(200, 180, 140, 0.25);
+      border: 1px solid rgba(200, 180, 140, 0.2);
       border-radius: var(--r-md);
-      padding: var(--sp-3) var(--sp-4);
-      font-size: 0.78rem;
+      padding: var(--sp-3) var(--sp-8);
+      font-size: 0.82rem;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 120ms ease-out;
-      z-index: 100;
-      min-width: 130px;
-      line-height: 1.9;
-      box-shadow: 0 8px 32px rgba(100,90,70,0.15), 0 2px 8px rgba(100,90,70,0.08);
+      z-index: 20;
+      line-height: 1.8;
+      box-shadow: 0 2px 12px rgba(100,90,70,0.08);
+      margin-block-start: var(--sp-3);
+      white-space: nowrap;
+      overflow: hidden;
     }
 
-    #tooltip.visible { opacity: 1; }
-    #tooltip .tip-date {
-      font-weight: 600;
-      font-size: 0.8rem;
-      color: var(--text-primary);
-      margin-block-end: var(--sp-2);
-      padding-block-end: var(--sp-2);
-      border-bottom: 1px solid rgba(200,180,140,0.2);
-    }
-
-    .tip-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--sp-3);
-    }
-
-    .tip-label {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      color: var(--text-muted);
-    }
-
-    .tip-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .tip-val { font-weight: 600; color: var(--text-primary); }
+    #tooltip.visible { visibility: visible; }
+    /* Tooltip text styles (used inline) */
 
     /* ── Table Card ── */
     .table-card {
@@ -848,24 +908,49 @@
       </div>
     </div>
 
-    <div class="chart-wrapper">
-      <canvas id="bpChart" width="900" height="260" aria-label="血压趋势折线图"></canvas>
-      <div id="tooltip">
-        <div class="tip-date" id="tip-date">—</div>
-        <div class="tip-row">
-          <span class="tip-label"><span class="tip-dot" style="background:var(--bp-high)"></span>收缩压</span>
-          <span class="tip-val" id="tip-sys">—</span>
-        </div>
-        <div class="tip-row">
-          <span class="tip-label"><span class="tip-dot" style="background:#60c4f0"></span>舒张压</span>
-          <span class="tip-val" id="tip-dia">—</span>
-        </div>
-        <div class="tip-row">
-          <span class="tip-label"><span class="tip-dot" style="background:var(--hr-color)"></span>心率</span>
-          <span class="tip-val" id="tip-hr">—</span>
-        </div>
+    <div class="bp-chart-body">
+      <div class="y-col y-col-left" id="yAxisLeft">
+        <span style="position:absolute;top:6.2%">140</span>
+        <span style="position:absolute;top:17.6%">130</span>
+        <span style="position:absolute;top:29.0%">120</span>
+        <span style="position:absolute;top:40.4%">110</span>
+        <span style="position:absolute;top:51.9%">100</span>
+        <span style="position:absolute;top:63.3%">90</span>
+        <span style="position:absolute;top:74.7%">80</span>
+        <span style="position:absolute;top:86.2%">70</span>
       </div>
+      <div class="chart-wrapper" id="bpChartWrapper">
+        <canvas id="bpChart" width="1200" height="260" aria-label="血压趋势折线图"></canvas>
+      </div>
+      <div class="y-col y-col-right" id="yAxisRight">
+        <span style="position:absolute;top:6.2%">100</span>
+        <span style="position:absolute;top:19.5%">90</span>
+        <span style="position:absolute;top:32.8%">80</span>
+        <span style="position:absolute;top:46.2%">70</span>
+        <span style="position:absolute;top:59.5%">60</span>
+        <span style="position:absolute;top:72.8%">50</span>
+        <span style="position:absolute;top:86.2%">40</span>
+      </div>
+    </div><!-- end bp-chart-body -->
+    <div id="tooltip">
+      <span id="tip-date" style="font-weight:600;font-size:0.85rem;white-space:nowrap;margin-right:var(--sp-6);">—</span>
+      <span style="display:flex;align-items:center;gap:var(--sp-2);margin-right:var(--sp-5);">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--bp-high);flex-shrink:0;"></span>
+        <span style="color:var(--text-muted);">收缩压</span>
+        <span id="tip-sys" style="font-weight:600;">—</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:var(--sp-2);margin-right:var(--sp-5);">
+        <span style="width:8px;height:8px;border-radius:50%;background:#60c4f0;flex-shrink:0;"></span>
+        <span style="color:var(--text-muted);">舒张压</span>
+        <span id="tip-dia" style="font-weight:600;">—</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:var(--sp-2);">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--hr-color);flex-shrink:0;"></span>
+        <span style="color:var(--text-muted);">心率</span>
+        <span id="tip-hr" style="font-weight:600;">—</span>
+      </span>
     </div>
+    <div class="chart-drag-hint">← 拖动 →</div>
   </section>
 
   <!-- Distribution -->
@@ -961,7 +1046,7 @@
     { date: '2026-03-25', label: '3月25日', sys: 116, dia: 79, hr: 69 },
     { date: '2026-03-26', label: '3月26日', sys: 126, dia: 88, hr: 68 },
     { date: '2026-03-27', label: '3月27日', sys: 117, dia: 76, hr: 74 },
-    { date: '2026-03-28', label: '3月28日', sys: 123, dia: 85, hr: 66 },
+    { date: '2026-03-28', label: '3月28日', sys: 126, dia: 85, hr: 66 },
     { date: '2026-03-29', label: '3月29日', sys: 125, dia: 81, hr: 66 },
     { date: '2026-03-30', label: '3月30日', sys: 115, dia: 80, hr: 66 },
     { date: '2026-03-31', label: '3月31日', sys: 120, dia: 80, hr: 78 },
@@ -1149,43 +1234,68 @@
   /* ── Chart ── */
   const canvas = document.getElementById('bpChart');
   const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  const H = canvas.height;
+
+  /* BP Chart drag-to-scroll */
+  const bpWrap = document.getElementById('bpChartWrapper');
+  let bpDragging = false, bpStartX = 0, bpScrollLeft = 0;
+  bpWrap.addEventListener('mousedown', e => {
+    bpDragging = true;
+    bpStartX = e.pageX - bpWrap.offsetLeft;
+    bpScrollLeft = bpWrap.scrollLeft;
+    bpWrap.style.cursor = 'grabbing';
+  });
+  bpWrap.addEventListener('mousemove', e => {
+    if (!bpDragging) return;
+    const x = e.pageX - bpWrap.offsetLeft;
+    bpWrap.scrollLeft = bpScrollLeft - (x - bpStartX);
+  });
+  window.addEventListener('mouseup', () => { if (bpDragging) { bpDragging = false; bpWrap.style.cursor = 'grab'; } });
+  bpWrap.addEventListener('touchstart', e => {
+    bpStartX = e.touches[0].pageX - bpWrap.offsetLeft;
+    bpScrollLeft = bpWrap.scrollLeft; bpDragging = true;
+  });
+  bpWrap.addEventListener('touchmove', e => {
+    if (!bpDragging) return;
+    const x = e.touches[0].pageX - bpWrap.offsetLeft;
+    bpWrap.scrollLeft = bpScrollLeft - (x - bpStartX);
+  });
+  bpWrap.addEventListener('touchend', () => { bpDragging = false; });
+  bpWrap._bpFirstDraw = true;
   const padL = 52, padR = 20, padT = 16, padB = 36;
-  const plotW = W - padL - padR;
-  const plotH = H - padT - padB;
+  /* plotW/plotH are now dynamic inside drawChart */
 
   function drawChart(data) {
-    ctx.clearRect(0, 0, W, H);
+    const availW = bpWrap.clientWidth || 600;
+    const neededW = Math.max(availW, 80 + data.length * 28);
+    canvas.width = neededW;
+    ctx.clearRect(0, 0, neededW, H);
+    const plotW2 = canvas.width - padL - padR;
+    const plotH = H - padT - padB;
 
     /* Background subtle gradient */
     const bg = ctx.createLinearGradient(0, padT, 0, H - padB);
     bg.addColorStop(0, 'rgba(48,160,96,0.02)');
     bg.addColorStop(1, 'rgba(217,80,80,0.02)');
     ctx.fillStyle = bg;
-    ctx.fillRect(padL, padT, plotW, plotH);
+    ctx.fillRect(padL, padT, plotW2, plotH);
 
     /* Grid lines — expanded to 70-140 to fit both SYS and DIA */
     ctx.strokeStyle = 'rgba(200,180,140,0.12)';
     ctx.lineWidth = 1;
     for (let v = 70; v <= 140; v += 10) {
       const y = padT + plotH - (v - 70) / 70 * plotH;
-      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW2, y); ctx.stroke();
     }
 
-    /* Y axis labels (left: SYS/DIA) — 70 to 140 */
-    ctx.fillStyle = 'rgba(107,96,80,0.5)';
-    ctx.font = '10px DM Sans';
-    ctx.textAlign = 'right';
-    for (let v = 70; v <= 140; v += 10) {
-      ctx.fillText(v, padL - 6, padT + plotH - (v - 70) / 70 * plotH + 4);
-    }
+    /* Y axis labels now in separate divs (fixed, don't scroll with canvas) */
 
     /* Left axis: 收缩压/舒张压 (70-140) */
     function sy(v) { return padT + plotH - (v - 70) / 70 * plotH; }
     /* Right axis: 心率 (40-100) */
     function hy(v) { return padT + plotH - (v - 40) / 60 * plotH; }
     /* X */
-    function sx(i) { return padL + (i + 0.5) / data.length * plotW; }
+    function sx(i) { return padL + (i + 0.5) / data.length * plotW2; }
 
     /* Draw smooth lines */
     function drawLine(yVals, color, lw, dash) {
@@ -1271,15 +1381,8 @@
       });
     }
 
-    /* HR right axis labels — adjust range to 40-100 */
-    ctx.fillStyle = 'rgba(124,111,221,0.5)';
-    ctx.font = '10px DM Sans';
-    ctx.textAlign = 'right';
-    for (let v = 40; v <= 100; v += 10) {
-      ctx.fillText(v, W - 4, hy(v) + 4);
-    }
-
-    /* Bottom X labels */
+        /* HR right axis labels are now in separate fixed div */
+/* Bottom X labels */
     ctx.fillStyle = 'rgba(107,96,80,0.45)';
     ctx.font = '10px DM Sans';
     ctx.textAlign = 'center';
@@ -1314,7 +1417,7 @@
     const data = canvas._chartData;
     if (!data || !canvas._sxFn) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = W / rect.width;
+    const scaleX = canvas.width / rect.width;
     const mx = (e.clientX - rect.left) * scaleX;
     const sxFn = canvas._sxFn;
 
@@ -1331,15 +1434,6 @@
       tipDia.textContent = d.dia + ' mmHg';
       tipHr.textContent  = d.hr != null ? d.hr + ' bpm' : '—';
 
-      const wrapRect = canvas.parentElement.getBoundingClientRect();
-      const tipW = 136, tipH = 88;
-      let left = (e.clientX - wrapRect.left) + 14;
-      let top  = (e.clientY - wrapRect.top)  - tipH / 2;
-      if (left + tipW > wrapRect.width) left = left - tipW - 20;
-      if (top < 4) top = 4;
-      if (top + tipH > wrapRect.height) top = wrapRect.height - tipH - 4;
-      tooltip.style.left = left + 'px';
-      tooltip.style.top  = top  + 'px';
       tooltip.classList.add('visible');
     } else {
       tooltip.classList.remove('visible');
@@ -1379,9 +1473,9 @@
     updateAverages(currentData);
     renderTable(currentPage);
     renderPagination(currentPage);
-    // 日视图：图表限最近30天，表格和统计不变
-    const chartData = (period === 'day') ? currentData.slice(-30) : currentData;
+    const chartData = currentData;
     drawChart(chartData);
+    if (bpWrap._bpFirstDraw) { bpWrap._bpFirstDraw = false; bpWrap.scrollLeft = bpWrap.scrollWidth; }
   }
 
   // ── 自定义日期范围 ──
@@ -1449,7 +1543,6 @@
 
     ctx.clearRect(0, 0, 200, 200);
     if (total === 0) {
-      /* 空状态 */
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(100,90,70,0.08)';
@@ -1484,13 +1577,11 @@
       item.className = 'dist-legend-item';
       item.innerHTML = `
         <span class="dist-legend-dot" style="background:${d.color}"></span>
-        <div class="dist-legend-info">
-          <span class="dist-legend-name">${d.label}</span>
-          <div class="dist-legend-bar-wrap">
-            <div class="dist-legend-bar" style="width:${pct}%;background:${d.color}"></div>
-          </div>
-          <span class="dist-legend-num">${d.count}次 ${pct}%</span>
+        <span class="dist-legend-label-wrap"><span class="dist-legend-name">${d.label}</span></span>
+        <div class="dist-legend-bar-wrap">
+          <div class="dist-legend-bar" style="width:${pct}%;background:${d.color}"></div>
         </div>
+        <span class="dist-legend-num">${d.count}次 ${pct}%</span>
       `;
       distLegend.appendChild(item);
     });
@@ -1719,7 +1810,8 @@
     updateAverages(RAW);
     renderTable(1);
     renderPagination(1);
-    drawChart(RAW.slice(-30));
+    drawChart(currentData);
+    bpWrap.scrollLeft = bpWrap.scrollWidth;
     drawMenstrualChart();
 
     /* Footer date */
