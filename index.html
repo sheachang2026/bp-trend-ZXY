@@ -1087,6 +1087,11 @@
 </div>
 
 <script>
+  /* ── DEBUG ── */
+  window.onerror = function(msg, url, line) {
+    document.body.prepend(document.createTextNode('JS ERROR: ' + msg + ' (line ' + line + ')'));
+    return true;
+  };
   /* ── Data ─────────────────────────────────────────────────── */
   const RAW = [
     { date: '2026-03-18', label: '3月18日', sys: 123, dia: 84, hr: 69 },
@@ -1694,7 +1699,7 @@
 
   const menstWrap   = document.getElementById('menstScrollWrap');
   const menstCanvas = document.getElementById('menstrualChart');
-  const menstCtx    = menstCanvas.getContext('2d');
+  const menstCtx    = menstCanvas ? menstCanvas.getContext('2d') : null;
 
   const MH      = 200;
   const mPadL   = 52, mPadR  = 20, mPadT = 16, mPadB = 36;
@@ -1712,6 +1717,7 @@
   }
 
   function drawMenstrualChart() {
+    if (!menstCtx) return;
     resizeMenstrualCanvas();
     const MW    = menstCanvas.width;
     const mPlotW = MW - mPadL - mPadR;
@@ -1824,13 +1830,14 @@
     drawMPoints(filtered.map(d => d.sys), '#ff7b7b');
     drawMPoints(filtered.map(d => d.dia), '#60c4f0');
 
-    if (menstWrap._menstFirstDraw) {
+    if (menstWrap && menstWrap._menstFirstDraw) {
       menstWrap._menstFirstDraw = false;
       menstWrap.scrollLeft = menstWrap.scrollWidth;
     }
   }
 
   (function initMenstrualDrag() {
+    if (!menstWrap || !menstCtx) return;
     let dragging = false, startX = 0, scrollLeft = 0;
     menstWrap.addEventListener('mousedown', e => {
       dragging = true;
@@ -1857,7 +1864,7 @@
     menstWrap.addEventListener('touchend', () => { dragging = false; });
   })();
 
-  menstWrap._menstFirstDraw = true;
+  if (menstWrap) menstWrap._menstFirstDraw = true;
 
   /* ── Monthly Cycle Chart ─────────────────────────────────── */
   const monthlyCanvas  = document.getElementById('monthlyChart');
