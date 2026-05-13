@@ -1718,7 +1718,13 @@
 
   function drawMenstrualChart() {
     if (!menstCtx) return;
+    try {
     resizeMenstrualCanvas();
+    monthlyCtx.fillStyle = 'rgba(0,80,200,0.1)';
+    monthlyCtx.fillRect(0, 0, menstCanvas.width, menstCanvas.height);
+    monthlyCtx.fillStyle = '#00f';
+    monthlyCtx.font = '12px monospace';
+    monthlyCtx.fillText('drawMenstrualChart called OK', 10, 20);
     const MW    = menstCanvas.width;
     const mPlotW = MW - mPadL - mPadR;
     const mPlotH = MH - mPadT - mPadB;
@@ -1895,9 +1901,10 @@
   }
 
   function drawMonthlyChart() {
-    const MH    = 180;
-    const PAD_L = 48, PAD_R = 20, PAD_T = 16, PAD_B = 32;
-    const BPX   = 22;
+    try {
+    const MH    = 280;
+    const PAD_L = 48, PAD_R = 20, PAD_T = 16, PAD_B = 36;
+    const BPX   = 24;
 
     const months = {};
     RAW.forEach(d => {
@@ -1907,7 +1914,7 @@
     });
 
     const monthKeys = Object.keys(months).sort();
-    if (!monthKeys.length) return;
+    if (!monthKeys.length) { console.warn('No month keys'); return; }
 
     const rowH    = MH;
     const totalH  = rowH * monthKeys.length;
@@ -1917,6 +1924,13 @@
     monthlyCanvas.width  = CW;
     monthlyCanvas.height = totalH;
     monthlyCtx.clearRect(0, 0, CW, totalH);
+
+    // Draw a visible test
+    monthlyCtx.fillStyle = 'rgba(100,80,200,0.15)';
+    monthlyCtx.fillRect(0, 0, CW, totalH);
+    monthlyCtx.fillStyle = '#000';
+    monthlyCtx.font = '14px monospace';
+    monthlyCtx.fillText(`DEBUG: ${monthKeys.length} months, ${totalH}px tall`, PAD_L, PAD_T + 20);
 
     const yMin = 70, yMax = 140;
     const plotH = MH - PAD_T - PAD_B;
@@ -2000,17 +2014,26 @@
     });
 
     monthlyWrap.style.height = totalH + 'px';
+    monthlyCtx.fillStyle = '#000';
+    monthlyCtx.font = '12px monospace';
+    monthlyCtx.fillText('✅ drawMonthlyChart complete - rows:' + monthKeys.length + ' h:' + totalH, PAD_L, totalH - 10);
+    } catch(e) { console.error('drawMonthlyChart error:', e); }
   }
 
   /* ── Init ── */
   (function init() {
+    try {
+    console.log('init called, RAW.length=' + RAW.length);
     updateAverages(RAW);
     renderTable(1);
     renderPagination(1);
     drawChart(currentData);
     bpWrap.scrollLeft = bpWrap.scrollWidth;
+    console.log('drawMenstrualChart start');
     drawMenstrualChart();
+    console.log('drawMonthlyChart start');
     drawMonthlyChart();
+    console.log('drawMonthlyChart done');
 
     /* Footer date */
     const today = new Date();
