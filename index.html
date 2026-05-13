@@ -1689,8 +1689,8 @@
      MENSTRUAL CYCLE CHART  (horizontally scrollable)
   ═══════════════════════════════════════════ */
   const MENSTRUAL_PERIODS = [
-    { start: '2026-04-12', end: '2026-04-16', label: '4月' },
-    { start: '2026-05-07', end: '2026-05-11', label: '5月' },
+    { num: 1, start: '2026-04-12', end: '2026-04-16', label: '4月' },
+    { num: 2, start: '2026-05-07', end: '2026-05-11', label: '5月' },
   ];
 
   const menstWrap   = document.getElementById('menstScrollWrap');
@@ -1955,14 +1955,17 @@
           monthlyCtx.fillRect(PAD_L + di * BPX, PAD_T + yOff, BPX, plotH);
         });
 
-        // X-axis: cycle day numbers + calendar date
-        monthlyCtx.font = '9px DM Sans, sans-serif';
+        // X-axis: cycle day numbers + calendar date (alternating to avoid overlap)
         data.forEach((d, di) => {
           monthlyCtx.textAlign = 'center';
+          monthlyCtx.font = '9px DM Sans, sans-serif';
           monthlyCtx.fillStyle = 'rgba(107,96,80,0.50)';
           monthlyCtx.fillText('第' + (di + 1) + '天', PAD_L + di * BPX + BPX / 2, MH - 22 + yOff);
-          monthlyCtx.fillStyle = 'rgba(107,96,80,0.32)';
-          monthlyCtx.fillText(d.label, PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
+          // Show calendar date only on odd days (skip overlapping)
+          if (di % 2 === 0) {
+            monthlyCtx.fillStyle = 'rgba(107,96,80,0.35)';
+            monthlyCtx.fillText(d.date.slice(5).replace('-', '/'), PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
+          }
         });
 
         // Y-axis labels
