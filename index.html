@@ -1898,12 +1898,28 @@
       // Group by menstrual cycle (each period = one cycle)
       const sorted = [...RAW].sort((a, b) => a.date < b.date ? -1 : 1);
       const periods = MENSTRUAL_PERIODS.slice().sort((a, b) => a.start < b.start ? -1 : 1);
+      // Show 7 days before period start + period days + 10 days after period end
+      const PRE_DAYS = 7, POST_DAYS = 10;
+      function addDays(dateStr, n) {
+        const d = new Date(dateStr + 'T00:00:00');
+        d.setDate(d.getDate() + n);
+        return d.toISOString().slice(0, 10);
+      }
       const cycles = periods.map((p, pi) => ({
         label: '周期' + p.num,
         startDate: p.start,
-        // Show ALL data from this period start to the day before the next period (or end of data)
-        nextStart: pi < periods.length - 1 ? periods[pi + 1].start : null,
-        data: sorted.filter(d => d.date >= p.start && (pi < periods.length - 1 ? d.date < periods[pi + 1].start : true))
+        // Window: (p.start - PRE_DAYS) to (p.end + POST_DAYS), or until next period - 1
+        winStart: addDays(p.start, -PRE_DAYS),
+        winEnd:   pi < periods.length - 1
+                  ? addDays(periods[pi + 1].start, -1)
+                  : addDays(p.end, POST_DAYS),
+        data: sorted.filter(d => {
+          const ds = d.date;
+          const winEnd = pi < periods.length - 1
+            ? addDays(periods[pi + 1].start, -1)
+            : addDays(p.end, POST_DAYS);
+          return ds >= addDays(p.start, -PRE_DAYS) && ds <= winEnd;
+        })
       })).filter(c => c.data.length > 0);
 
       if (!cycles.length) { console.warn('No cycle data'); return; }
@@ -1961,12 +1977,15 @@
         data.forEach((d, di) => {
           monthlyCtx.textAlign = 'center';
           monthlyCtx.font = '9px DM Sans, sans-serif';
-          monthlyCtx.fillStyle = 'rgba(107,96,80,0.50)';
-          monthlyCtx.fillText('第' + (di + 1) + '天', PAD_L + di * BPX + BPX / 2, MH - 22 + yOff);
-          // Show calendar date only on odd days (skip overlapping)
+          // Day relative to period start (can be negative = pre-period days)
+          const dayInCycle = Math.round((new Date(d.date + 'T00:00:00') - new Date(cycle.startDate + 'T00:00:00')) / 86400000) + 1;
+          const prefix = dayInCycle <= 0 ? 'P' : 'D'; // P = pre-period, D = day
+          monthlyCtx.fillStyle = 'rgba(107,96,80,0.55)';
+          monthlyCtx.fillText(prefix + Math.abs(dayInCycle), PAD_L + di * BPX + BPX / 2, MH - 22 + yOff);
+          // Show calendar date only on even indices (every other day)
           if (di % 2 === 0) {
-            monthlyCtx.fillStyle = 'rgba(107,96,80,0.35)';
-            monthlyCtx.fillText(d.date.slice(5).replace('-', '/'), PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
+            monthlyCtx.fillStyle = 'rgba(107,96,80,0.32)';
+            monthlyCtx.fillText(d.label, PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
           }
         });
 
