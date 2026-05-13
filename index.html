@@ -1090,7 +1090,10 @@
 <script>
   /* ── DEBUG ── */
   window.onerror = function(msg, url, line) {
-    document.body.prepend(document.createTextNode('JS ERROR: ' + msg + ' (line ' + line + ')'));
+    var el = document.createElement('div');
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f00;color:#fff;font-size:20px;z-index:99999;padding:10px;';
+    el.textContent = 'JS ERROR: ' + msg + ' (line ' + line + ')';
+    document.body.insertBefore(el, document.body.firstChild);
     return true;
   };
   /* ── Data ─────────────────────────────────────────────────── */
@@ -2016,6 +2019,8 @@
   }
 
   /* ── Init ── */
+  document.body.style.cssText = 'background:#ffe !important; transition: background 0.5s;';
+  document.title = 'LOADING: ' + document.title;
   (function init() {
     try {
     console.log('init RAW.length=' + RAW.length);
