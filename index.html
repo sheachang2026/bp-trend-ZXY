@@ -1974,7 +1974,7 @@
         vals.forEach((v, i) => {
           if (v == null) { started = false; return; }
           const x = PAD_L + i * BPX + BPX / 2;
-          const y = toY(v);
+          const y = toY(v) + yOff;
           if (!started) { monthlyCtx.moveTo(x, y); started = true; return; }
           monthlyCtx.lineTo(x, y);
         });
@@ -1985,7 +1985,7 @@
         vals.forEach((v, i) => {
           if (v == null) return;
           const x = PAD_L + i * BPX + BPX / 2;
-          const y = toY(v);
+          const y = toY(v) + yOff;
           monthlyCtx.beginPath();
           monthlyCtx.arc(x, y, 2.5, 0, Math.PI * 2);
           monthlyCtx.fillStyle = color;
