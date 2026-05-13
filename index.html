@@ -1898,10 +1898,12 @@
       // Group by menstrual cycle (each period = one cycle)
       const sorted = [...RAW].sort((a, b) => a.date < b.date ? -1 : 1);
       const periods = MENSTRUAL_PERIODS.slice().sort((a, b) => a.start < b.start ? -1 : 1);
-      const cycles = periods.map(p => ({
+      const cycles = periods.map((p, pi) => ({
         label: '周期' + p.num,
         startDate: p.start,
-        data: sorted.filter(d => d.date >= p.start && d.date <= p.end)
+        // Show ALL data from this period start to the day before the next period (or end of data)
+        nextStart: pi < periods.length - 1 ? periods[pi + 1].start : null,
+        data: sorted.filter(d => d.date >= p.start && (pi < periods.length - 1 ? d.date < periods[pi + 1].start : true))
       })).filter(c => c.data.length > 0);
 
       if (!cycles.length) { console.warn('No cycle data'); return; }
