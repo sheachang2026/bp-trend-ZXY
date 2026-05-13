@@ -440,7 +440,8 @@
     }
 
     .monthly-chart-wrap canvas {
-      width: 100% !important;
+      width: auto !important;
+      max-width: 100%;
       display: block;
     }
 
@@ -1087,14 +1088,6 @@
 </div>
 
 <script>
-  /* ── DEBUG ── */
-  window.onerror = function(msg, url, line) {
-    var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f00;color:#fff;font-size:20px;z-index:99999;padding:10px;';
-    el.textContent = 'JS ERROR: ' + msg + ' (line ' + line + ')';
-    document.body.insertBefore(el, document.body.firstChild);
-    return true;
-  };
   /* ── Data ─────────────────────────────────────────────────── */
   const RAW = [
     { date: '2026-03-18', label: '3月18日', sys: 123, dia: 84, hr: 69 },
@@ -1925,13 +1918,6 @@
     monthlyCanvas.height = totalH;
     monthlyCtx.clearRect(0, 0, CW, totalH);
 
-    monthlyCtx.fillStyle = 'rgba(255,0,0,0.3)';
-    monthlyCtx.fillRect(PAD_L, PAD_T, CW - PAD_L - PAD_R, totalH - PAD_T - PAD_B);
-    monthlyCtx.fillStyle = '#fff';
-    monthlyCtx.font = 'bold 16px sans-serif';
-    monthlyCtx.textAlign = 'left';
-    monthlyCtx.fillText('Month rows:' + monthKeys.length + ' CW:' + CW + ' H:' + totalH, PAD_L + 4, PAD_T + 20);
-
     const yMin = 70, yMax = 140;
     const plotH = MH - PAD_T - PAD_B;
 
@@ -2018,8 +2004,6 @@
   }
 
   /* ── Init ── */
-  document.body.style.cssText = 'background:#ffe !important; transition: background 0.5s;';
-  document.title = 'LOADING: ' + document.title;
   (function init() {
     try {
     console.log('init RAW.length=' + RAW.length);
