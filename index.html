@@ -1895,115 +1895,119 @@
 
   function drawMonthlyChart() {
     try {
-    const MH    = 280;
-    const PAD_L = 48, PAD_R = 20, PAD_T = 16, PAD_B = 36;
-    const BPX   = 24;
+      // Group by menstrual cycle (each period = one cycle)
+      const sorted = [...RAW].sort((a, b) => a.date < b.date ? -1 : 1);
+      const periods = MENSTRUAL_PERIODS.slice().sort((a, b) => a.start < b.start ? -1 : 1);
+      const cycles = periods.map(p => ({
+        label: '周期' + p.num,
+        startDate: p.start,
+        data: sorted.filter(d => d.date >= p.start && d.date <= p.end)
+      })).filter(c => c.data.length > 0);
 
-    const months = {};
-    RAW.forEach(d => {
-      const ym = d.date.slice(0, 7);
-      if (!months[ym]) months[ym] = [];
-      months[ym].push(d);
-    });
+      if (!cycles.length) { console.warn('No cycle data'); return; }
 
-    const monthKeys = Object.keys(months).sort();
-    if (!monthKeys.length) { console.warn('No month keys'); return; }
+      const MH      = 280;
+      const PAD_L   = 52, PAD_R = 20, PAD_T = 16, PAD_B = 44;
+      const BPX     = 26;
+      const rowH    = MH;
+      const totalH  = rowH * cycles.length;
+      const maxDays = Math.max(...cycles.map(c => c.data.length));
+      const CW      = PAD_L + maxDays * BPX + PAD_R;
 
-    const rowH    = MH;
-    const totalH  = rowH * monthKeys.length;
-    const maxDays = Math.max(...monthKeys.map(k => months[k].length));
-    const CW      = PAD_L + maxDays * BPX + PAD_R;
+      monthlyCanvas.width  = CW;
+      monthlyCanvas.height = totalH;
+      monthlyCtx.clearRect(0, 0, CW, totalH);
 
-    monthlyCanvas.width  = CW;
-    monthlyCanvas.height = totalH;
-    monthlyCtx.clearRect(0, 0, CW, totalH);
+      const yMin = 70, yMax = 140;
+      const plotH = MH - PAD_T - PAD_B;
+      function toY(v) { return PAD_T + plotH - (v - yMin) / (yMax - yMin) * plotH; }
 
-    const yMin = 70, yMax = 140;
-    const plotH = MH - PAD_T - PAD_B;
+      cycles.forEach((cycle, rowIdx) => {
+        const { label, startDate, data } = cycle;
+        const yOff  = rowIdx * rowH;
+        const plotW = CW - PAD_L - PAD_R;
 
-    function toY(v) { return PAD_T + plotH - (v - yMin) / (yMax - yMin) * plotH; }
-
-    monthKeys.forEach((ym, rowIdx) => {
-      const row    = months[ym];
-      const yOff   = rowIdx * rowH;
-      const plotW  = CW - PAD_L - PAD_R;
-
-      monthlyCtx.strokeStyle = 'rgba(200,180,140,0.10)';
-      monthlyCtx.lineWidth   = 1;
-      for (let v = 70; v <= 140; v += 10) {
-        const y = toY(v) + yOff;
-        monthlyCtx.beginPath();
-        monthlyCtx.moveTo(PAD_L, y);
-        monthlyCtx.lineTo(PAD_L + plotW, y);
-        monthlyCtx.stroke();
-      }
-
-      monthlyCtx.fillStyle  = 'rgba(107,96,80,0.50)';
-      monthlyCtx.font       = '11px DM Sans, sans-serif';
-      monthlyCtx.textAlign  = 'right';
-      monthlyCtx.fillText(ym, PAD_L - 6, toY((yMin + yMax) / 2) + yOff + 4);
-
-      row.forEach((d, di) => {
-        const pc = getPhaseColor(d.date, MENSTRUAL_PERIODS);
-        if (!pc) return;
-        monthlyCtx.fillStyle = pc.bg;
-        monthlyCtx.fillRect(PAD_L + di * BPX, PAD_T + yOff, BPX, plotH);
-      });
-
-      monthlyCtx.fillStyle  = 'rgba(107,96,80,0.38)';
-      monthlyCtx.font       = '10px DM Sans, sans-serif';
-      monthlyCtx.textAlign  = 'center';
-      row.forEach((d, di) => {
-        if (di % 3 === 0) {
-          monthlyCtx.fillText(d.label.replace(/月|日/g, ''), PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
-        }
-      });
-
-      monthlyCtx.fillStyle = 'rgba(107,96,80,0.30)';
-      monthlyCtx.textAlign = 'right';
-      monthlyCtx.font      = '10px DM Sans, sans-serif';
-      for (let v = 70; v <= 140; v += 10) {
-        monthlyCtx.fillText(v, PAD_L - 4, toY(v) + yOff + 3);
-      }
-
-      function drawRowLine(vals, color) {
-        monthlyCtx.beginPath();
-        monthlyCtx.strokeStyle = color;
-        monthlyCtx.lineWidth   = 2;
-        let started = false;
-        vals.forEach((v, i) => {
-          if (v == null) { started = false; return; }
-          const x = PAD_L + i * BPX + BPX / 2;
-          const y = toY(v) + yOff;
-          if (!started) { monthlyCtx.moveTo(x, y); started = true; return; }
-          monthlyCtx.lineTo(x, y);
-        });
-        monthlyCtx.stroke();
-      }
-
-      function drawRowPoints(vals, color) {
-        vals.forEach((v, i) => {
-          if (v == null) return;
-          const x = PAD_L + i * BPX + BPX / 2;
+        monthlyCtx.strokeStyle = 'rgba(200,180,140,0.10)';
+        monthlyCtx.lineWidth = 1;
+        for (let v = 70; v <= 140; v += 10) {
           const y = toY(v) + yOff;
           monthlyCtx.beginPath();
-          monthlyCtx.arc(x, y, 2.5, 0, Math.PI * 2);
-          monthlyCtx.fillStyle = color;
-          monthlyCtx.fill();
+          monthlyCtx.moveTo(PAD_L, y);
+          monthlyCtx.lineTo(PAD_L + plotW, y);
+          monthlyCtx.stroke();
+        }
+
+        // Row label (left)
+        monthlyCtx.fillStyle = 'rgba(107,96,80,0.55)';
+        monthlyCtx.font = 'bold 11px DM Sans, sans-serif';
+        monthlyCtx.textAlign = 'right';
+        monthlyCtx.fillText(label, PAD_L - 6, toY((yMin + yMax) / 2) + yOff + 4);
+
+        // Subtitle: actual start date
+        monthlyCtx.font = '9px DM Sans, sans-serif';
+        monthlyCtx.fillStyle = 'rgba(107,96,80,0.35)';
+        monthlyCtx.fillText(startDate + ' 开始', PAD_L - 6, toY((yMin + yMax) / 2) + yOff + 18);
+
+        // Phase background fills
+        data.forEach((d, di) => {
+          const pc = getPhaseColor(d.date, MENSTRUAL_PERIODS);
+          monthlyCtx.fillStyle = pc ? pc.bg : 'rgba(200,190,170,0.06)';
+          monthlyCtx.fillRect(PAD_L + di * BPX, PAD_T + yOff, BPX, plotH);
         });
-      }
 
-      drawRowLine(row.map(d => d.sys), '#ff7b7b');
-      drawRowLine(row.map(d => d.dia), '#60c4f0');
-      drawRowPoints(row.map(d => d.sys), '#ff7b7b');
-      drawRowPoints(row.map(d => d.dia), '#60c4f0');
-    });
+        // X-axis: cycle day numbers + calendar date
+        monthlyCtx.font = '9px DM Sans, sans-serif';
+        data.forEach((d, di) => {
+          monthlyCtx.textAlign = 'center';
+          monthlyCtx.fillStyle = 'rgba(107,96,80,0.50)';
+          monthlyCtx.fillText('第' + (di + 1) + '天', PAD_L + di * BPX + BPX / 2, MH - 22 + yOff);
+          monthlyCtx.fillStyle = 'rgba(107,96,80,0.32)';
+          monthlyCtx.fillText(d.label, PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
+        });
 
-    monthlyWrap.style.height = totalH + 'px';
+        // Y-axis labels
+        monthlyCtx.fillStyle = 'rgba(107,96,80,0.30)';
+        monthlyCtx.textAlign = 'right';
+        monthlyCtx.font = '10px DM Sans, sans-serif';
+        for (let v = 70; v <= 140; v += 10) {
+          monthlyCtx.fillText(v, PAD_L - 4, toY(v) + yOff + 3);
+        }
+
+        // Lines and points
+        function drawRowLine(vals, color) {
+          monthlyCtx.beginPath();
+          monthlyCtx.strokeStyle = color;
+          monthlyCtx.lineWidth = 2;
+          let started = false;
+          vals.forEach((v, i) => {
+            if (v == null) { started = false; return; }
+            const x = PAD_L + i * BPX + BPX / 2;
+            const y = toY(v) + yOff;
+            if (!started) { monthlyCtx.moveTo(x, y); started = true; return; }
+            monthlyCtx.lineTo(x, y);
+          });
+          monthlyCtx.stroke();
+        }
+        function drawRowPoints(vals, color) {
+          vals.forEach((v, i) => {
+            if (v == null) return;
+            const x = PAD_L + i * BPX + BPX / 2;
+            const y = toY(v) + yOff;
+            monthlyCtx.beginPath();
+            monthlyCtx.arc(x, y, 2.5, 0, Math.PI * 2);
+            monthlyCtx.fillStyle = color;
+            monthlyCtx.fill();
+          });
+        }
+        drawRowLine(data.map(d => d.sys), '#ff7b7b');
+        drawRowLine(data.map(d => d.dia), '#60c4f0');
+        drawRowPoints(data.map(d => d.sys), '#ff7b7b');
+        drawRowPoints(data.map(d => d.dia), '#60c4f0');
+      });
+
+      monthlyWrap.style.height = totalH + 'px';
     } catch(e) { console.error('drawMonthlyChart error:', e); }
-  }
-
-  /* ── Init ── */
+  }  /* ── Init ── */
   (function init() {
     try {
     console.log('init RAW.length=' + RAW.length);
