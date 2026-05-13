@@ -394,6 +394,57 @@
     }
 
     /* ── Menstrual Cycle Card ── */
+    /* ── Monthly Cycle Card ── */
+    .monthly-cycle-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: var(--sp-6) var(--sp-8);
+      box-shadow: var(--sh-card);
+      margin-block-end: var(--sp-6);
+    }
+
+    .monthly-cycle-card__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--sp-4);
+      margin-block-end: var(--sp-5);
+      flex-wrap: wrap;
+    }
+
+    .phase-legend {
+      display: flex;
+      gap: var(--sp-5);
+      align-items: center;
+      flex-wrap: wrap;
+      margin-block-start: var(--sp-4);
+    }
+
+    .phase-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .phase-swatch { width: 16px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .phase-swatch--follicular { background: rgba(48,160,96,0.12); border: 1px solid rgba(48,160,96,0.3); }
+    .phase-swatch--luteal     { background: rgba(200,136,10,0.12); border: 1px solid rgba(200,136,10,0.3); }
+    .phase-swatch--menstrual  { background: rgba(230,80,110,0.12); border: 1px solid rgba(230,80,110,0.35); }
+
+    .monthly-chart-wrap {
+      position: relative;
+      overflow-x: auto;
+    }
+
+    .monthly-chart-wrap canvas {
+      width: 100% !important;
+      display: block;
+    }
+
+    /* ── Menstrual (old, kept for backward compat) ── */
     .menstrual-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -980,30 +1031,32 @@
   </section>
 
   <!-- Menstrual Cycle Analysis -->
-  <section class="menstrual-card" aria-label="血压与月经周期分析">
-    <div class="menstrual-card__header">
+  <section class="monthly-cycle-card" aria-label="血压随月经周期变化 — 月度对比">
+    <div class="monthly-cycle-card__header">
       <div>
-        <h2 class="chart-card__title">血压随月经周期变化趋势</h2>
+        <h2 class="chart-card__title">血压随月经周期变化</h2>
+        <p class="chart-card__subtitle">各月血压走势对比 · 对齐日历日期</p>
       </div>
-      <div class="period-legend">
-        <span class="period-legend-item">
-          <span class="period-swatch period-swatch--period"></span>月经期
+      <div class="phase-legend">
+        <span class="phase-legend-item">
+          <span class="phase-swatch phase-swatch--follicular"></span>卵泡期
         </span>
-        <span class="period-legend-item">
-          <span class="period-swatch period-swatch--start"></span>月经开始日
+        <span class="phase-legend-item">
+          <span class="phase-swatch phase-swatch--luteal"></span>黄体期
+        </span>
+        <span class="phase-legend-item">
+          <span class="phase-swatch phase-swatch--menstrual"></span>月经期
+        </span>
+        <span class="phase-legend-item" style="margin-inline-start: var(--sp-3); padding-inline-start: var(--sp-3); border-inline-start: 1px solid var(--border);">
+          <span style="width:14px;height:2px;background:#ff7b7b;border-radius:1px;display:inline-block;"></span>收缩压
+        </span>
+        <span class="phase-legend-item">
+          <span style="width:14px;height:2px;background:#60c4f0;border-radius:1px;display:inline-block;"></span>舒张压
         </span>
       </div>
     </div>
-    <div class="menstrual-body">
-      <!-- Fixed Y-axis labels -->
-      <div class="menst-yaxis">
-        <span>140</span><span>130</span><span>120</span><span>110</span><span>100</span><span>90</span><span>80</span><span>70</span>
-      </div>
-      <!-- Scrolling canvas area -->
-      <div class="menstrual-chart-wrap" id="menstScrollWrap">
-        <canvas id="menstrualChart"></canvas>
-        <div class="drag-hint">← 拖动 →</div>
-      </div>
+    <div class="monthly-chart-wrap" id="monthlyChartWrap">
+      <canvas id="monthlyChart"></canvas>
     </div>
   </section>
 
@@ -1806,6 +1859,142 @@
 
   menstWrap._menstFirstDraw = true;
 
+  /* ── Monthly Cycle Chart ─────────────────────────────────── */
+  const monthlyCanvas  = document.getElementById('monthlyChart');
+  const monthlyCtx     = monthlyCanvas.getContext('2d');
+  const monthlyWrap    = document.getElementById('monthlyChartWrap');
+
+  const PHASE_COLORS = {
+    follicular: { bg: 'rgba(48,160,96,0.07)',  border: 'rgba(48,160,96,0.25)' },
+    luteal:     { bg: 'rgba(200,136,10,0.07)',  border: 'rgba(200,136,10,0.25)' },
+    menstrual:  { bg: 'rgba(230,80,110,0.10)',  border: 'rgba(230,80,110,0.35)' },
+  };
+
+  function getPhaseColor(date, periods) {
+    for (const p of periods) {
+      const start = new Date(p.start + 'T00:00:00');
+      const end   = new Date(p.end   + 'T23:59:59');
+      const d     = new Date(date    + 'T00:00:00');
+      if (d >= start && d <= end) return PHASE_COLORS.menstrual;
+    }
+    for (const p of periods) {
+      const pStart = new Date(p.start + 'T00:00:00');
+      const d      = new Date(date    + 'T00:00:00');
+      const diff   = Math.round((d - pStart) / 86400000);
+      if (diff >= 6  && diff <= 14) return PHASE_COLORS.follicular;
+      if (diff >= 15)               return PHASE_COLORS.luteal;
+    }
+    return null;
+  }
+
+  function drawMonthlyChart() {
+    const MH    = 180;
+    const PAD_L = 48, PAD_R = 20, PAD_T = 16, PAD_B = 32;
+    const BPX   = 22;
+
+    const months = {};
+    RAW.forEach(d => {
+      const ym = d.date.slice(0, 7);
+      if (!months[ym]) months[ym] = [];
+      months[ym].push(d);
+    });
+
+    const monthKeys = Object.keys(months).sort();
+    if (!monthKeys.length) return;
+
+    const rowH    = MH;
+    const totalH  = rowH * monthKeys.length;
+    const maxDays = Math.max(...monthKeys.map(k => months[k].length));
+    const CW      = PAD_L + maxDays * BPX + PAD_R;
+
+    monthlyCanvas.width  = CW;
+    monthlyCanvas.height = totalH;
+    monthlyCtx.clearRect(0, 0, CW, totalH);
+
+    const yMin = 70, yMax = 140;
+    const plotH = MH - PAD_T - PAD_B;
+
+    function toY(v) { return PAD_T + plotH - (v - yMin) / (yMax - yMin) * plotH; }
+
+    monthKeys.forEach((ym, rowIdx) => {
+      const row    = months[ym];
+      const yOff   = rowIdx * rowH;
+      const plotW  = CW - PAD_L - PAD_R;
+
+      monthlyCtx.strokeStyle = 'rgba(200,180,140,0.10)';
+      monthlyCtx.lineWidth   = 1;
+      for (let v = 70; v <= 140; v += 10) {
+        const y = toY(v) + yOff;
+        monthlyCtx.beginPath();
+        monthlyCtx.moveTo(PAD_L, y);
+        monthlyCtx.lineTo(PAD_L + plotW, y);
+        monthlyCtx.stroke();
+      }
+
+      monthlyCtx.fillStyle  = 'rgba(107,96,80,0.50)';
+      monthlyCtx.font       = '11px DM Sans, sans-serif';
+      monthlyCtx.textAlign  = 'right';
+      monthlyCtx.fillText(ym, PAD_L - 6, toY((yMin + yMax) / 2) + yOff + 4);
+
+      row.forEach((d, di) => {
+        const pc = getPhaseColor(d.date, MENSTRUAL_PERIODS);
+        if (!pc) return;
+        monthlyCtx.fillStyle = pc.bg;
+        monthlyCtx.fillRect(PAD_L + di * BPX, PAD_T + yOff, BPX, plotH);
+      });
+
+      monthlyCtx.fillStyle  = 'rgba(107,96,80,0.38)';
+      monthlyCtx.font       = '10px DM Sans, sans-serif';
+      monthlyCtx.textAlign  = 'center';
+      row.forEach((d, di) => {
+        if (di % 3 === 0) {
+          monthlyCtx.fillText(d.label.replace(/月|日/g, ''), PAD_L + di * BPX + BPX / 2, MH - 10 + yOff);
+        }
+      });
+
+      monthlyCtx.fillStyle = 'rgba(107,96,80,0.30)';
+      monthlyCtx.textAlign = 'right';
+      monthlyCtx.font      = '10px DM Sans, sans-serif';
+      for (let v = 70; v <= 140; v += 10) {
+        monthlyCtx.fillText(v, PAD_L - 4, toY(v) + yOff + 3);
+      }
+
+      function drawRowLine(vals, color) {
+        monthlyCtx.beginPath();
+        monthlyCtx.strokeStyle = color;
+        monthlyCtx.lineWidth   = 2;
+        let started = false;
+        vals.forEach((v, i) => {
+          if (v == null) { started = false; return; }
+          const x = PAD_L + i * BPX + BPX / 2;
+          const y = toY(v);
+          if (!started) { monthlyCtx.moveTo(x, y); started = true; return; }
+          monthlyCtx.lineTo(x, y);
+        });
+        monthlyCtx.stroke();
+      }
+
+      function drawRowPoints(vals, color) {
+        vals.forEach((v, i) => {
+          if (v == null) return;
+          const x = PAD_L + i * BPX + BPX / 2;
+          const y = toY(v);
+          monthlyCtx.beginPath();
+          monthlyCtx.arc(x, y, 2.5, 0, Math.PI * 2);
+          monthlyCtx.fillStyle = color;
+          monthlyCtx.fill();
+        });
+      }
+
+      drawRowLine(row.map(d => d.sys), '#ff7b7b');
+      drawRowLine(row.map(d => d.dia), '#60c4f0');
+      drawRowPoints(row.map(d => d.sys), '#ff7b7b');
+      drawRowPoints(row.map(d => d.dia), '#60c4f0');
+    });
+
+    monthlyWrap.style.height = totalH + 'px';
+  }
+
   /* ── Init ── */
   (function init() {
     updateAverages(RAW);
@@ -1814,6 +2003,7 @@
     drawChart(currentData);
     bpWrap.scrollLeft = bpWrap.scrollWidth;
     drawMenstrualChart();
+    drawMonthlyChart();
 
     /* Footer date */
     const today = new Date();
