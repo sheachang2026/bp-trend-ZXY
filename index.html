@@ -1708,6 +1708,7 @@
   const PX_PER_DAY  = 30;
 
   function resizeMenstrualCanvas() {
+    if (!menstCanvas) return;
     const filtered = RAW.filter(d => d.date >= '2026-04-01');
     if (!filtered.length) { menstCanvas.width = CANVAS_BASE; return; }
     const firstD = new Date(filtered[0].date + 'T00:00:00');
@@ -1836,6 +1837,7 @@
       menstWrap._menstFirstDraw = false;
       menstWrap.scrollLeft = menstWrap.scrollWidth;
     }
+    } catch(e) { console.error('drawMenstrualChart error:', e); }
   }
 
   (function initMenstrualDrag() {
