@@ -1921,8 +1921,12 @@
     monthlyCanvas.height = totalH;
     monthlyCtx.clearRect(0, 0, CW, totalH);
 
-    monthlyCtx.fillStyle = '#f00';
+    monthlyCtx.fillStyle = 'rgba(255,0,0,0.3)';
     monthlyCtx.fillRect(PAD_L, PAD_T, CW - PAD_L - PAD_R, totalH - PAD_T - PAD_B);
+    monthlyCtx.fillStyle = '#fff';
+    monthlyCtx.font = 'bold 16px sans-serif';
+    monthlyCtx.textAlign = 'left';
+    monthlyCtx.fillText('Month rows:' + monthKeys.length + ' CW:' + CW + ' H:' + totalH, PAD_L + 4, PAD_T + 20);
 
     const yMin = 70, yMax = 140;
     const plotH = MH - PAD_T - PAD_B;
