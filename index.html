@@ -437,11 +437,12 @@
     .monthly-chart-wrap {
       position: relative;
       overflow-x: auto;
+      height: 600px;
     }
 
     .monthly-chart-wrap canvas {
       width: 100% !important;
-      display: block;
+      height: 100% !important;
     }
 
     /* ── Menstrual (old, kept for backward compat) ── */
@@ -1720,11 +1721,6 @@
     if (!menstCtx) return;
     try {
     resizeMenstrualCanvas();
-    monthlyCtx.fillStyle = 'rgba(0,80,200,0.1)';
-    monthlyCtx.fillRect(0, 0, menstCanvas.width, menstCanvas.height);
-    monthlyCtx.fillStyle = '#00f';
-    monthlyCtx.font = '12px monospace';
-    monthlyCtx.fillText('drawMenstrualChart called OK', 10, 20);
     const MW    = menstCanvas.width;
     const mPlotW = MW - mPadL - mPadR;
     const mPlotH = MH - mPadT - mPadB;
@@ -1925,12 +1921,8 @@
     monthlyCanvas.height = totalH;
     monthlyCtx.clearRect(0, 0, CW, totalH);
 
-    // Draw a visible test
-    monthlyCtx.fillStyle = 'rgba(100,80,200,0.15)';
-    monthlyCtx.fillRect(0, 0, CW, totalH);
-    monthlyCtx.fillStyle = '#000';
-    monthlyCtx.font = '14px monospace';
-    monthlyCtx.fillText(`DEBUG: ${monthKeys.length} months, ${totalH}px tall`, PAD_L, PAD_T + 20);
+    monthlyCtx.fillStyle = '#f00';
+    monthlyCtx.fillRect(PAD_L, PAD_T, CW - PAD_L - PAD_R, totalH - PAD_T - PAD_B);
 
     const yMin = 70, yMax = 140;
     const plotH = MH - PAD_T - PAD_B;
@@ -2014,26 +2006,21 @@
     });
 
     monthlyWrap.style.height = totalH + 'px';
-    monthlyCtx.fillStyle = '#000';
-    monthlyCtx.font = '12px monospace';
-    monthlyCtx.fillText('✅ drawMonthlyChart complete - rows:' + monthKeys.length + ' h:' + totalH, PAD_L, totalH - 10);
     } catch(e) { console.error('drawMonthlyChart error:', e); }
   }
 
   /* ── Init ── */
   (function init() {
     try {
-    console.log('init called, RAW.length=' + RAW.length);
+    console.log('init RAW.length=' + RAW.length);
     updateAverages(RAW);
     renderTable(1);
     renderPagination(1);
     drawChart(currentData);
     bpWrap.scrollLeft = bpWrap.scrollWidth;
-    console.log('drawMenstrualChart start');
     drawMenstrualChart();
-    console.log('drawMonthlyChart start');
     drawMonthlyChart();
-    console.log('drawMonthlyChart done');
+    } catch(e) { console.error('init error:', e); }
 
     /* Footer date */
     const today = new Date();
@@ -2046,6 +2033,3 @@
         RAW[0].label + ' — ' + RAW[RAW.length-1].label + ' · 共' + RAW.length + '条记录';
     }
   })();
-</script>
-</body>
-</html>
