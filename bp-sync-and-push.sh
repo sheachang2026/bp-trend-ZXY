@@ -13,7 +13,7 @@ export FEISHU_APP_ID="cli_a92400c4f6b8dcb6"
 export FEISHU_APP_SECRET="pE1E7Sgu5Ehzp5ARKcdHVcMlK06PdEJG"
 
 # 1. 运行飞书同步脚本
-node sync-from-feishu.js
+/usr/local/bin/node sync-from-feishu.js
 
 # 2. 检查是否有变化
 if git diff --quiet; then
@@ -21,12 +21,14 @@ if git diff --quiet; then
   exit 0
 fi
 
-# 3. 提交
-git add index.html
-TODAY=$(date +"%Y年%m月%d日")
-git commit -m "Auto sync: $TODAY 血压数据"
-
-# 4. 推送（走代理）
-git push origin main
-
-echo "[$(date)] 推送完成"
+# 3. 仅检查 index.html 是否有变化
+if ! git diff --quiet index.html; then
+  git add index.html
+  TODAY=$(date +"%Y年%m月%d日")
+  git commit -m "Auto sync: $TODAY 血压数据"
+  # 4. 推送（走代理）
+  git push origin main
+  echo "[$(date)] 推送完成"
+else
+  echo "[$(date)] 数据无变化，无需推送"
+fi
