@@ -942,6 +942,10 @@
           <span class="legend-item"><span class="legend-line legend-line--sys"></span>收缩压</span>
           <span class="legend-item"><span class="legend-line legend-line--dia"></span>舒张压</span>
           <span class="legend-item"><span class="legend-line legend-line--hr"></span>心率</span>
+          <span class="legend-item" style="margin-left:var(--sp-3);padding-left:var(--sp-3);border-left:1px solid var(--border);">
+            <span style="display:inline-block;width:8px;height:8px;background:#e8a0c0;transform:rotate(45deg);flex-shrink:0;"></span>
+            <span style="color:var(--text-muted);">经期</span>
+          </span>
         </div>
         <div class="period-filter" role="group" aria-label="统计周期">
           <button class="period-btn active" data-period="day">日</button>
@@ -986,6 +990,7 @@
     </div><!-- end bp-chart-body -->
     <div id="tooltip">
       <span id="tip-date" style="font-weight:600;font-size:0.85rem;white-space:nowrap;margin-right:var(--sp-6);">—</span>
+      <span id="tip-period" style="display:none;background:rgba(200,80,140,0.12);color:#c04080;font-size:0.72rem;padding:1px 7px;border-radius:20px;margin-right:var(--sp-4);">经期</span>
       <span style="display:flex;align-items:center;gap:var(--sp-2);margin-right:var(--sp-5);">
         <span style="width:8px;height:8px;border-radius:50%;background:var(--bp-high);flex-shrink:0;"></span>
         <span style="color:var(--text-muted);">收缩压</span>
@@ -1180,7 +1185,7 @@
     { date: '2026-06-25', label: '6月25日', sys: 107, dia: 80, hr: 72 },
     { date: '2026-06-27', label: '6月27日', sys: 104, dia: 73, hr: 70 },
     { date: '2026-06-28', label: '6月28日', sys: 118, dia: 80, hr: 64 },
-    { date: '2026-07-02', label: '7月2日', sys: 121, dia: 83, hr: 68 },
+    { date: '2026-07-02', label: '7月2日', sys: 121, dia: 83, hr: 68, period: true },
     { date: '2026-07-03', label: '7月3日', sys: 125, dia: 84, hr: 70 },
     { date: '2026-07-04', label: '7月4日', sys: 110, dia: 79, hr: 66 }
   ];
@@ -1494,6 +1499,21 @@
     drawPoints(data.map(d => d.dia), '#60c4f0');
     drawHRPoints(data.map(d => d.hr), '#b4a0ff');
 
+    /* 经期标记 — 在收缩压点上方画小菱形 */
+    data.forEach((d, i) => {
+      if (!d.period) return;
+      const x = sx(i);
+      const y = sy(d.sys);
+      ctx.save();
+      ctx.fillStyle = '#e8a0c0';
+      ctx.shadowColor = 'rgba(200,80,140,0.4)';
+      ctx.shadowBlur = 6;
+      ctx.translate(x, y - 14);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-4, -4, 8, 8);
+      ctx.restore();
+    });
+
     canvas._chartData = data;
     canvas._sxFn = sx;
     canvas._syFn = sy;
@@ -1527,6 +1547,13 @@
       tipSys.textContent = d.sys + ' mmHg';
       tipDia.textContent = d.dia + ' mmHg';
       tipHr.textContent  = d.hr != null ? d.hr + ' bpm' : '—';
+
+      const tipPeriod = document.getElementById('tip-period');
+      if (d.period) {
+        tipPeriod.style.display = 'inline-flex';
+      } else {
+        tipPeriod.style.display = 'none';
+      }
 
       tooltip.classList.add('visible');
     } else {
