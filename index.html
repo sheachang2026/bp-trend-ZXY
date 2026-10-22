@@ -393,6 +393,15 @@
       z-index: 10;
     }
 
+    .chart-footnote {
+      margin: var(--sp-3) 0 0;
+      padding-top: var(--sp-3);
+      border-top: 1px solid rgba(200,180,140,0.18);
+      font-size: 0.72rem;
+      line-height: 1.6;
+      color: rgba(107,96,80,0.62);
+    }
+
     /* ── Menstrual Cycle Card ── */
     /* ── Monthly Cycle Card ── */
     .monthly-cycle-card {
@@ -1003,6 +1012,7 @@
       </span>
     </div>
     <div class="chart-drag-hint">← 拖动 →</div>
+    <p class="chart-footnote">注：2026年9月中旬起数据来自华为运动健康；10月起的心率为 App 月均值（67 bpm）参考值，非逐条实测。</p>
   </section>
 
   <!-- Distribution -->
@@ -1188,40 +1198,40 @@
     { date: '2026-09-15', label: '9月15日 06:28', time: '06:28', note: '早晨测量', sys: 114, dia: 80, hr: null },
     { date: '2026-09-23', label: '9月23日 06:58', time: '06:58', note: '早晨测量', sys: 117, dia: 79, hr: null },
     { date: '2026-09-29', label: '9月29日 07:00', time: '07:00', note: '早晨测量', sys: 120, dia: 83, hr: null },
-    { date: '2026-10-04', label: '10月4日 17:05', time: '17:05', note: '下午测量 · 血压偏高', sys: 152, dia: 90, hr: null },
-    { date: '2026-10-05', label: '10月5日 05:36', time: '05:36', note: '早晨测量 · 血压偏高', sys: 129, dia: 92, hr: null },
-    { date: '2026-10-05', label: '10月5日 19:42', time: '19:42', note: '晚间测量 · 血压偏高', sys: 135, dia: 92, hr: null },
-    { date: '2026-10-06', label: '10月6日 06:59', time: '06:59', note: '早晨测量', sys: 130, dia: 83, hr: null },
-    { date: '2026-10-06', label: '10月6日 22:00', time: '22:00', note: '晚间测量', sys: 121, dia: 84, hr: null },
-    { date: '2026-10-07', label: '10月7日 07:46', time: '07:46', note: '早晨测量', sys: 129, dia: 87, hr: null },
-    { date: '2026-10-07', label: '10月7日 21:41', time: '21:41', note: '晚间测量', sys: 122, dia: 84, hr: null },
-    { date: '2026-10-08', label: '10月8日 07:00', time: '07:00', note: '早晨测量', sys: 114, dia: 82, hr: null },
-    { date: '2026-10-08', label: '10月8日 21:45', time: '21:45', note: '晚间测量', sys: 125, dia: 82, hr: null },
-    { date: '2026-10-09', label: '10月9日 07:12', time: '07:12', note: '早晨测量', sys: 119, dia: 84, hr: null },
-    { date: '2026-10-10', label: '10月10日 06:29', time: '06:29', note: '早晨测量', sys: 118, dia: 84, hr: null },
-    { date: '2026-10-10', label: '10月10日 22:03', time: '22:03', note: '晚间测量', sys: 117, dia: 82, hr: null },
-    { date: '2026-10-11', label: '10月11日 07:16', time: '07:16', note: '早晨测量', sys: 122, dia: 84, hr: null },
-    { date: '2026-10-11', label: '10月11日 21:24', time: '21:24', note: '晚间测量', sys: 118, dia: 83, hr: null },
-    { date: '2026-10-12', label: '10月12日 07:09', time: '07:09', note: '早晨测量', sys: 116, dia: 85, hr: null },
-    { date: '2026-10-13', label: '10月13日 06:54', time: '06:54', note: '早晨测量', sys: 116, dia: 76, hr: null },
-    { date: '2026-10-13', label: '10月13日 21:39', time: '21:39', note: '晚间测量', sys: 111, dia: 74, hr: null },
-    { date: '2026-10-14', label: '10月14日 07:24', time: '07:24', note: '早晨测量', sys: 111, dia: 77, hr: null },
-    { date: '2026-10-14', label: '10月14日 21:59', time: '21:59', note: '晚间测量', sys: 115, dia: 79, hr: null },
-    { date: '2026-10-15', label: '10月15日 07:23', time: '07:23', note: '早晨测量', sys: 113, dia: 80, hr: null },
-    { date: '2026-10-15', label: '10月15日 21:25', time: '21:25', note: '晚间测量', sys: 117, dia: 79, hr: null },
-    { date: '2026-10-16', label: '10月16日 07:22', time: '07:22', note: '早晨测量', sys: 114, dia: 72, hr: null },
-    { date: '2026-10-16', label: '10月16日 21:37', time: '21:37', note: '晚间测量', sys: 125, dia: 81, hr: null },
-    { date: '2026-10-17', label: '10月17日 06:55', time: '06:55', note: '早晨测量', sys: 114, dia: 81, hr: null },
-    { date: '2026-10-17', label: '10月17日 21:30', time: '21:30', note: '晚间测量', sys: 119, dia: 73, hr: null },
-    { date: '2026-10-18', label: '10月18日 07:21', time: '07:21', note: '早晨测量', sys: 104, dia: 76, hr: null },
-    { date: '2026-10-18', label: '10月18日 22:16', time: '22:16', note: '晚间测量', sys: 118, dia: 76, hr: null },
-    { date: '2026-10-19', label: '10月19日 07:15', time: '07:15', note: '早晨测量', sys: 119, dia: 78, hr: null },
-    { date: '2026-10-19', label: '10月19日 20:50', time: '20:50', note: '晚间测量', sys: 115, dia: 77, hr: null },
-    { date: '2026-10-20', label: '10月20日 07:26', time: '07:26', note: '早晨测量', sys: 111, dia: 75, hr: null },
-    { date: '2026-10-20', label: '10月20日 22:24', time: '22:24', note: '晚间测量', sys: 109, dia: 76, hr: null },
-    { date: '2026-10-21', label: '10月21日 07:15', time: '07:15', note: '早晨测量', sys: 109, dia: 78, hr: null },
-    { date: '2026-10-21', label: '10月21日 22:55', time: '22:55', note: '晚间测量', sys: 119, dia: 77, hr: null },
-    { date: '2026-10-22', label: '10月22日 07:00', time: '07:00', note: '早晨测量', sys: 123, dia: 78, hr: null }
+    { date: '2026-10-04', label: '10月4日 17:05', time: '17:05', note: '下午测量 · 血压偏高 · 心率为华为健康月均值参考(67bpm)', sys: 152, dia: 90, hr: 67 },
+    { date: '2026-10-05', label: '10月5日 05:36', time: '05:36', note: '早晨测量 · 血压偏高 · 心率为华为健康月均值参考(67bpm)', sys: 129, dia: 92, hr: 67 },
+    { date: '2026-10-05', label: '10月5日 19:42', time: '19:42', note: '晚间测量 · 血压偏高 · 心率为华为健康月均值参考(67bpm)', sys: 135, dia: 92, hr: 67 },
+    { date: '2026-10-06', label: '10月6日 06:59', time: '06:59', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 130, dia: 83, hr: 67 },
+    { date: '2026-10-06', label: '10月6日 22:00', time: '22:00', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 121, dia: 84, hr: 67 },
+    { date: '2026-10-07', label: '10月7日 07:46', time: '07:46', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 129, dia: 87, hr: 67 },
+    { date: '2026-10-07', label: '10月7日 21:41', time: '21:41', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 122, dia: 84, hr: 67 },
+    { date: '2026-10-08', label: '10月8日 07:00', time: '07:00', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 114, dia: 82, hr: 67 },
+    { date: '2026-10-08', label: '10月8日 21:45', time: '21:45', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 125, dia: 82, hr: 67 },
+    { date: '2026-10-09', label: '10月9日 07:12', time: '07:12', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 119, dia: 84, hr: 67 },
+    { date: '2026-10-10', label: '10月10日 06:29', time: '06:29', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 118, dia: 84, hr: 67 },
+    { date: '2026-10-10', label: '10月10日 22:03', time: '22:03', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 117, dia: 82, hr: 67 },
+    { date: '2026-10-11', label: '10月11日 07:16', time: '07:16', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 122, dia: 84, hr: 67 },
+    { date: '2026-10-11', label: '10月11日 21:24', time: '21:24', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 118, dia: 83, hr: 67 },
+    { date: '2026-10-12', label: '10月12日 07:09', time: '07:09', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 116, dia: 85, hr: 67 },
+    { date: '2026-10-13', label: '10月13日 06:54', time: '06:54', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 116, dia: 76, hr: 67 },
+    { date: '2026-10-13', label: '10月13日 21:39', time: '21:39', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 111, dia: 74, hr: 67 },
+    { date: '2026-10-14', label: '10月14日 07:24', time: '07:24', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 111, dia: 77, hr: 67 },
+    { date: '2026-10-14', label: '10月14日 21:59', time: '21:59', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 115, dia: 79, hr: 67 },
+    { date: '2026-10-15', label: '10月15日 07:23', time: '07:23', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 113, dia: 80, hr: 67 },
+    { date: '2026-10-15', label: '10月15日 21:25', time: '21:25', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 117, dia: 79, hr: 67 },
+    { date: '2026-10-16', label: '10月16日 07:22', time: '07:22', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 114, dia: 72, hr: 67 },
+    { date: '2026-10-16', label: '10月16日 21:37', time: '21:37', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 125, dia: 81, hr: 67 },
+    { date: '2026-10-17', label: '10月17日 06:55', time: '06:55', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 114, dia: 81, hr: 67 },
+    { date: '2026-10-17', label: '10月17日 21:30', time: '21:30', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 119, dia: 73, hr: 67 },
+    { date: '2026-10-18', label: '10月18日 07:21', time: '07:21', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 104, dia: 76, hr: 67 },
+    { date: '2026-10-18', label: '10月18日 22:16', time: '22:16', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 118, dia: 76, hr: 67 },
+    { date: '2026-10-19', label: '10月19日 07:15', time: '07:15', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 119, dia: 78, hr: 67 },
+    { date: '2026-10-19', label: '10月19日 20:50', time: '20:50', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 115, dia: 77, hr: 67 },
+    { date: '2026-10-20', label: '10月20日 07:26', time: '07:26', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 111, dia: 75, hr: 67 },
+    { date: '2026-10-20', label: '10月20日 22:24', time: '22:24', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 109, dia: 76, hr: 67 },
+    { date: '2026-10-21', label: '10月21日 07:15', time: '07:15', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 109, dia: 78, hr: 67 },
+    { date: '2026-10-21', label: '10月21日 22:55', time: '22:55', note: '晚间测量 · 心率为华为健康月均值参考(67bpm)', sys: 119, dia: 77, hr: 67 },
+    { date: '2026-10-22', label: '10月22日 07:00', time: '07:00', note: '早晨测量 · 心率为华为健康月均值参考(67bpm)', sys: 123, dia: 78, hr: 67 }
   ];
 
   /* ── Helpers ── */
@@ -1330,7 +1340,7 @@
         '<td>' + d.label + '</td>' +
         '<td style="color:var(--bp-high)">' + d.sys + '</td>' +
         '<td style="color:#60c4f0">' + d.dia + '</td>' +
-        '<td style="color:var(--hr-color)">' + (d.hr != null ? d.hr + ' bpm' : '—') + '</td>' +
+        '<td style="color:var(--hr-color)">' + (d.hr != null ? d.hr + ' bpm' : '—') + (d.note && d.note.indexOf('月均') >= 0 ? ' <span style="opacity:0.55;font-size:0.75rem;">月均</span>' : '') + '</td>' +
         '<td><span class="status-tag ' + cls + '">' + label + '</span></td>';
       tbody.appendChild(tr);
     });
