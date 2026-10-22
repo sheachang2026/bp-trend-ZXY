@@ -117,9 +117,17 @@ function formatRecord(item) {
 
   if (isNaN(sys) || isNaN(dia)) return null;
 
+  // 同一天可能有多次测量（早/晚），从"血压记录"字段提取时间加到标签上
+  const rec = f['血压记录'] || '';
+  const tm = String(rec).match(/(\d{1,2}):(\d{2})/);
+  const time = tm ? `${tm[1]}:${tm[2]}` : null;
+  const note = f['备注'] || '';
+
   return {
     date: dateStr,
-    label,
+    label: time ? `${label} ${time}` : label,
+    time,
+    note: note === 'null' ? '' : String(note),
     sys,
     dia,
     hr: isNaN(hr) ? null : hr,
@@ -132,7 +140,7 @@ function updateHtml(records) {
 
   // Build new RAW JS literal
   const rawEntries = records
-    .map(r => `    { date: '${r.date}', label: '${r.label}', sys: ${r.sys}, dia: ${r.dia}, hr: ${r.hr == null ? 'null' : r.hr} }`)
+    .map(r => `    { date: '${r.date}', label: '${r.label}', time: ${r.time ? `'${r.time}'` : 'null'}, note: '${r.note.replace(/'/g, '')}', sys: ${r.sys}, dia: ${r.dia}, hr: ${r.hr == null ? 'null' : r.hr} }`)
     .join(',\n');
 
   // Replace RAW array
@@ -180,7 +188,7 @@ function updateHtml(records) {
     const formatted = rawRecords
       .map(formatRecord)
       .filter(Boolean)
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
 
     if (formatted.length === 0) {
       console.warn('[sync] No valid records found, skipping update');
