@@ -161,7 +161,7 @@ function updateHtml(records) {
   };
 
   const rangeStr = `${fmt(oldest)} — ${fmt(newest)}`;
-  const metaPattern = /(<p class="page-header__meta">)[^<]*(<\/p>)/;
+  const metaPattern = /(<p class="page-header__meta"[^>]*>)[^<]*(<\/p>)/;
   const newMeta = `<p class="page-header__meta">${rangeStr} · 共${total}条记录</p>`;
   const finalHtml = newHtml.replace(metaPattern, newMeta);
 
