@@ -43,15 +43,17 @@ function req(path, method, body, token) {
 }
 
 (async () => {
-  const [date, sys, dia, hr, note = ''] = process.argv.slice(2);
-  if (!date || !sys || !dia) {
-    console.error('用法: node add-record.js <YYYY-MM-DD> <收缩压> <舒张压> [心率] [备注]');
+  const [dateArg, sys, dia, hr, note = ''] = process.argv.slice(2);
+  if (!dateArg || !sys || !dia) {
+    console.error('用法: node add-record.js <YYYY-MM-DD[ HH:MM]> <收缩压> <舒张压> [心率] [备注]');
     process.exit(1);
   }
+  // 支持 "2026-10-22 21:30" 形式，带时间时标签会显示为 "10月22日 21:30"
+  const [date, time] = dateArg.split(/\s+/);
   const t = (await req('/open-apis/auth/v3/tenant_access_token/internal', 'POST', loadCredentials())).tenant_access_token;
 
   const fields = {
-    '血压记录': date,
+    '血压记录': time ? `${date} ${time}` : date,
     '日期': date,
     '收缩压': Number(sys),
     '舒张压': Number(dia),
@@ -64,5 +66,5 @@ function req(path, method, body, token) {
     console.error('create failed:', JSON.stringify(r));
     process.exit(1);
   }
-  console.log(`[add] ${date} ${sys}/${dia}${hr ? ' ' + hr + 'bpm' : ''} -> record ${r.data.record.record_id}`);
+  console.log(`[add] ${date}${time ? ' ' + time : ''} ${sys}/${dia}${hr ? ' ' + hr + 'bpm' : ''} -> record ${r.data.record.record_id}`);
 })();
