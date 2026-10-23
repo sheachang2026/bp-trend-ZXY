@@ -9,6 +9,7 @@
 
 const https = require('https');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const APP_TOKEN = 'Q4pbb4IHyaEh76sf3ZFcmOQvnAh';
@@ -37,10 +38,20 @@ function feishuGet(path) {
 
 async function getFeishuToken() {
   // Use tenant access token via app credentials
-  const appId = process.env.FEISHU_APP_ID;
-  const appSecret = process.env.FEISHU_APP_SECRET;
+  // 优先环境变量，否则从 OpenClaw 配置读取（密钥不写死在脚本里）
+  let appId = process.env.FEISHU_APP_ID;
+  let appSecret = process.env.FEISHU_APP_SECRET;
   if (!appId || !appSecret) {
-    throw new Error('FEISHU_APP_ID and FEISHU_APP_SECRET env vars are required');
+    const cfgPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+    const feishu = cfg.channels && cfg.channels.feishu;
+    if (feishu && feishu.appId && feishu.appSecret) {
+      appId = appId || feishu.appId;
+      appSecret = appSecret || feishu.appSecret;
+    }
+  }
+  if (!appId || !appSecret) {
+    throw new Error('FEISHU_APP_ID and FEISHU_APP_SECRET are required (env or ~/.openclaw/openclaw.json)');
   }
   const body = JSON.stringify({ app_id: appId, app_secret: appSecret });
   return new Promise((resolve, reject) => {
